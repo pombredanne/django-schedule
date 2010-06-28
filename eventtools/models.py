@@ -302,6 +302,7 @@ class OccurrenceBase(models.Model):
     
     cancelled = models.BooleanField(_("cancelled"), default=False)
 
+    #_varied_event will be injected by eventmodelbase because we don't yet know the name of the varied event model.
     
     def __init__(self, *args, **kwargs):
         """by default, create items with varied values the same as unvaried"""
@@ -486,7 +487,7 @@ class EventModelBase(ModelBase):
 
             occurrence_class.add_to_class('generator', models.ForeignKey(generator_class, related_name = 'occurrences'))
             if hasattr(cls, 'varied_by'):
-               occurrence_class.add_to_class('_varied_event', models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True))
+                occurrence_class.add_to_class('_varied_event', models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True))
                # we need to add an unvaried_event FK into the variation class, BUT at this point the variation class hasn't been defined yet. For now, let's insist that this is done by using a base class for variation.
 
         super(EventModelBase, cls).__init__(name, bases, attrs)
@@ -570,7 +571,7 @@ class EventBase(models.Model):
         """
         returns the number of variations that this event has
         """
-        if self.__class__.varied_by:
+        if hasattr(self.__class__, 'varied_by'):
             return self.variations.count()
         else:
             return "N/A"
