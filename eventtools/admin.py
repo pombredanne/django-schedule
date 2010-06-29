@@ -4,11 +4,45 @@ from eventtools.adminviews import occurrences, make_exceptional_occurrence
 from django.conf.urls.defaults import *
 from django.core import urlresolvers
 
+from django.forms import ModelForm
 
 admin.site.register(Rule)
 
-class EventVariationInlineBase(admin.StackedInline):
-    model = None
+
+def create_occurrence_admin(model_class):
+    class OccurrenceAdmin(OccurrenceAdminBase):
+        ordering = ('varied_start_date', 'varied_start_time')
+        form = create_occurrence_admin_form(model_class)
+
+    return OccurrenceAdmin
+    
+def create_generator_inline(model_class):
+    class GeneratorInline(admin.TabularInline):
+        model = model_class
+        allow_add = True
+        extra = 1
+
+    return GeneratorInline
+    
+    
+def create_occurrence_admin_form(occurrence_class):
+    variation_class = occurrence_class._meta.get_field("_varied_event").rel.to
+    
+    class OccurrenceAdminForm(ModelForm):
+        class Meta:
+            model = occurrence_class
+        
+        def __init__(self, *args, **kwargs):
+            super(OccurrenceAdminForm, self).__init__(*args, **kwargs)
+            instance = kwargs.pop("instance")
+            choices = [(ev.id, ev.reason) for ev in variation_class.objects.filter(unvaried_event=instance.unvaried_event)]
+        
+            varied_event = self.fields['_varied_event']
+            varied_event.choices = choices
+        
+    return OccurrenceAdminForm
+    
+
 
 class EventAdminBase(admin.ModelAdmin):
     """
