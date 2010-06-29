@@ -32,7 +32,11 @@ You can specify the fields that are allowed to be varied in a subclass of EventV
     
 EventVariation says that you are only allowed to vary `location` and `description` (and, by ommission, not `title`).
 
-This plays out in each Occurrence, which will have a 'varied_event' field automatically added to it. For the occurrence o, you can access `o.varied_event`, `o.unvaried_event`, and `o.merged_event`. The last of these uses utils.MergedObject to access attributes of varied_event in favour of unvaried_event.
+This plays out in each Occurrence, which will have a 'varied_event' field automatically added to it. For the occurrence o, you can access `o.varied_event`, `o.unvaried_event`, and `o.merged_event`. The last of these uses utils.MergedObject to access attributes of varied_event, in favour of unvaried_event.
+
+Note: if you want to use varied_event values to 'turn off' unvaried_event, then:
+    * for charfields, use a space. This is what your content editors will do anyway!
+    * for booleans, define a corresponding NullBooleanField in EventVariation. If the nullboolean is Null, the unvaried_event is used. If it's False or True, it overrides the unvaried event.
 
 """
 
@@ -49,6 +53,9 @@ class EventVariationModelBase(ModelBase):
 
 class EventVariationBase(models.Model):
     __metaclass__ = EventVariationModelBase
+    
+    #injected by EventVariationModelBase:
+    # unvaried_event = models.ForeignKey(somekindofEvent)
     
     reason = models.CharField(_("Short reason for variation"), max_length = 255, help_text=_("this won't normally be shown to visitors, but is useful for identifying this variation in lists"))
 

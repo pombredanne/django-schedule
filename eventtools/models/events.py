@@ -14,18 +14,28 @@ Say your EventBase subclass is called Lecture. You will get LectureOccurrenceGen
 
 See occurrencegenerators.py and occurrences.py for details.
 
-"""
+How to use EventBase:
 
+Every EventBase model has several OccurrenceGenerators, each of which generate several Occurrences (and save the interesting ones to the database).
+
+You can get the OccurrenceGenerators with Event.generators (it's the reverse relation name).
+
+Since OccurrenceGenerators can generate a potentially infinite number of occurrences, you don't want to be able to get all the occurrences ever (it would take a while). You can tell whether an event has infinite amount of occurrences by seeing whether Event.get_last_day() returns a value. If it returns False, there's no end.
+
+To get an Event's occurrences between two dates:
+
+Event.get_occurrences(start_date, end_date).
+
+This will return a list of EventOccurrences. Remember to use EventOccurrence.merged_event to display the details for each event (since merged_event takes in to account variations).
+
+"""
 
 class EventModelBase(ModelBase):
     def __init__(cls, name, bases, attrs):
         """
-        Dynamically build two related classes to handle occurrences.
+        Dynamically generate two related classes to handle occurrences (get the vodka out, George).
         
-        The two generated classes are ModelNameOccurrence and ModelNameOccurrenceGenerator.
-        
-        If the EventBase subclass is called e.g. LectureEvent, then the two generated class will be called LectureEventOccurrence and LectureEventOccurrenceGenerator (yeesh, but end-user never sees these.)
-        
+        The two generated classes are ModelNameOccurrence and ModelNameOccurrenceGenerator.        
         """
         if name != 'EventBase': # This should only fire if this is a subclass (maybe we should make devs apply this metaclass to their subclass instead?)
             # Build names for the new classes
@@ -86,28 +96,30 @@ class EventBase(models.Model):
         return models.get_model(self._meta.app_label, self._generator_model_name)
     GeneratorModel = property(_generator_model)
 
-    def first_generator(self):
-        return self.generators.order_by('first_start_date', 'first_start_time')[0]
+    def _has_zero_generators(self):
+        return self.generators.count() == 0
+    has_zero_generators = property(_has_zero_generators)
         
-    def get_one_occurrence(self):
-        try:
-            return self.generators.all()[0].get_one_occurrence()
-        except IndexError:
-            raise IndexError("This Event type has no generators defined")
-    
+    def _has_multiple_occurrences(self):
+        return self.generators.count() > 1 or (self.generators.count() > 0 and self.generators.all()[0].rule != None)
+    has_multiple_occurrences = property(_has_multiple_occurrences)
+
+    def get_first_generator(self):
+        return self.generators.order_by('first_start_date', 'first_start_time')[0]
+    first_generator = get_first_generator
+            
     def get_first_occurrence(self):
         try:
             return self.first_generator().get_first_occurrence()		
         except IndexError:
             raise IndexError("This Event type has no generators defined")
+    get_one_occurrence = get_first_occurrence # for backwards compatibility
     
     def get_occurrences(self, start, end):
         occs = []
         for gen in self.generators.all():
             occs += gen.get_occurrences(start, end)
         return sorted(occs)
-
-
         
     def get_last_day(self):
         lastdays = []
@@ -118,14 +130,6 @@ class EventBase(models.Model):
         lastdays.sort()
         return lastdays[-1]
 
-    def _has_zero_generators(self):
-        return self.generators.count() == 0
-    has_zero_generators = property(_has_zero_generators)
-        
-    def _has_multiple_occurrences(self):
-        return self.generators.count() > 1 or (self.generators.count() > 0 and self.generators.all()[0].rule != None)
-    has_multiple_occurrences = property(_has_multiple_occurrences)
-
     def edit_occurrences_link(self):
         """ An admin link """
         # if self.has_multiple_occurrences:
@@ -133,8 +137,6 @@ class EventBase(models.Model):
             return _('no occurrences yet (<a href="%s/">add a generator here</a>)' % self.id)
         else:
            return '<a href="%s/occurrences/">%s</a>' % (self.id, unicode(_("view/edit occurrences")))
-            
-        # return _('(<a href="%s/">edit </a>)')
     edit_occurrences_link.allow_tags = True
     edit_occurrences_link.short_description = _("Occurrences")
     
@@ -145,11 +147,11 @@ class EventBase(models.Model):
         if self.__class__.varied_by:
             return self.variations.count()
         else:
-            return "N/A"
-        
+            return "N/A"  
     variations_count.short_description = _("# Variations")
     
     def create_generator(self, *args, **kwargs):
+        #for a bit of backwards compatibility. If you provide two datetimes, they will be split out into dates and times.
         if kwargs.has_key('start'):
             start = kwargs.pop('start')
             kwargs.update({
@@ -167,11 +169,8 @@ class EventBase(models.Model):
     def create_variation(self, *args, **kwargs):
         kwargs['unvaried_event'] = self
         return self.variations.create(*args, **kwargs)
-    
-    def get_absolute_url(self):
-        return "/event/%s/" % self.id
-    
-    def next_occurrences(self):
+        
+    def next_occurrences(self, num_days=28):
         from events.periods import Period
         first = False
         last = False
@@ -190,5 +189,5 @@ class EventBase(models.Model):
         if last:
             period = Period(self.generators.all(), first, last)
         else:
-            period = Period(self.generators.all(), datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(days=28))		
+            period = Period(self.generators.all(), datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(days=num_days))		
         return period.get_occurrences()
