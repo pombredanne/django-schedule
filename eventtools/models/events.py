@@ -30,6 +30,37 @@ This will return a list of EventOccurrences. Remember to use EventOccurrence.mer
 
 """
 
+class EventQuerySetBase(models.query.QuerySet):
+    def occurrences_between(self, start, end):        
+        occurrences = []
+        for item in self:
+            occurrences += item.generators.occurrences_between(start, end)
+            
+        return sorted(occurrences)
+
+    def between(self, start, end):
+        event_ids = []
+        events = []
+        occurrences = self.occurrences_between(start, end)
+        
+        for occurrence in occurrences:
+            # import pdb; pdb.set_trace()
+            if occurrence.unvaried_event.id not in event_ids: #just testing the id saves database lookups (er, maybe)
+                event_ids.append(occurrence.unvaried_event.id)
+                events.append(occurrence.unvaried_event)
+    
+        return events
+
+class EventManagerBase(models.Manager):
+    def get_query_set(self): 
+        return EventQuerySetBase(self.model)
+        
+    def occurrences_between(self, start, end):
+        return self.get_query_set().occurrences_between(start, end)
+        
+    def between(self, start, end):
+         return self.get_query_set().between(start, end)
+
 class EventModelBase(ModelBase):
     def __init__(cls, name, bases, attrs):
         """
@@ -72,15 +103,22 @@ class EventModelBase(ModelBase):
                # we need to add an unvaried_event FK into the variation class, BUT at this point the variation class hasn't been defined yet. For now, let's insist that this is done by using a base class for variation.
 
         super(EventModelBase, cls).__init__(name, bases, attrs)
-        
+
 class EventBase(models.Model):
     """
     Event information minus the scheduling details.
     
     Event scheduling is handled by one or more OccurrenceGenerators
     """
+    
+    #injected by EventModelBase:
+    # _occurrence_model_name
+    # _generator_model_name
+    
     __metaclass__ = EventModelBase
-
+    
+    objects = EventManagerBase()
+    
     class Meta:
         abstract = True
 
@@ -164,6 +202,10 @@ class EventBase(models.Model):
                 'first_end_date': end.date(),
                 'first_end_time': end.time()
             })
+        repeat_until = kwargs.get('repeat_until')
+        if repeat_until and isinstance(repeat_until, datetime.date):
+            kwargs['repeat_until'] = datetime.datetime.combine(repeat_until, datetime.time.max)
+
         return self.generators.create(*args, **kwargs)
     
     def create_variation(self, *args, **kwargs):

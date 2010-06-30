@@ -28,9 +28,44 @@ You might want to edit an occurrence if it's an exception to the 'norm'. For exa
 	• It has a more complex variation. This a foreign key to an EventVariation model.
 	
 See occurrences.py for details.
-
-
 """
+
+class OccurrenceGeneratorManager(models.Manager):
+        
+    def occurrences_between(self, start, end):
+        """
+        Returns all Occurrences with a start_date/time between two datetimes, sorted. 
+        
+        This function is placed here because OccurrenceGenerators know the name of the Occurrence model, not currently vice-versa.
+        However, we really want to hide this model, so lets make a convenience method in EventBaseManager.
+        
+        Get all OccurrenceGenerators that have the potential to produce occurrences between these dates.
+        Run 'em all, and grab the ones that are in range.
+            
+        TODO - make this a queryset function too!            
+        """
+        
+        if not isinstance(start, datetime.datetime):
+            start = datetime.datetime.combine(start, datetime.time.min)
+        
+        if not isinstance(end, datetime.datetime):
+            end = datetime.datetime.combine(end, datetime.time.max)
+        
+        
+        # relevant generators have
+        # the first_start_date before the requested end date AND
+        # the end date is NULL or after the requested start date
+        potental_occurrence_generators = self.filter(first_start_date__lte=end) & (self.filter(repeat_until__isnull=True) | self.filter(repeat_until__gte=start))
+        
+        occurrences = []
+        for generator in potental_occurrence_generators:
+            occurrences += generator.get_occurrences(start, end)
+        
+        #In case you are pondering returning a queryset, remember that potentially occurrences are not in the database, so no such QS exists.
+        
+        return sorted(occurrences)
+
+
 
 class OccurrenceGeneratorModelBase(ModelBase):
     """
@@ -49,9 +84,12 @@ class OccurrenceGeneratorBase(models.Model):
     """
     
     __metaclass__ = OccurrenceGeneratorModelBase
-    
+    objects = OccurrenceGeneratorManager()
     # Injected by EventModelBase:
     # event = models.ForeignKey(somekindofEvent)
+    
+    # Injected by OccurrenceGeneratorModelBase
+    # _occurrence_model_lame = somekindofOccurrence
     
     first_start_date = models.DateField(_('start date of the first occurrence'))
     first_start_time = models.TimeField(_('start time of the first occurrence'))
@@ -152,11 +190,15 @@ class OccurrenceGeneratorBase(models.Model):
 
     def __unicode__(self):
         date_format = u'l, %s' % ugettext("DATE_FORMAT")
-        return ugettext('%(title)s: %(start)s-%(end)s') % {
+        result = ugettext('%(title)s: %(start)s-%(end)s') % {
             'title': unicode(self.event),
             'start': date_filter(self.start, date_format),
             'end': date_filter(self.end, date_format),
         }
+        if self.rule:
+            result += " repeating %s until %s" % (self.rule, date_filter(self.repeat_until, date_format))
+            
+        return result
 
     def get_occurrences(self, start, end):
         """
