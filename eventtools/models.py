@@ -164,7 +164,7 @@ class OccurrenceGeneratorBase(models.Model):
     
     def get_one_occurrence(self):
         """
-        This gets ANY accurrence, it doesn't matter which.
+        This gets ANY occurrence, it doesn't matter which.
         So the quick thing is to try getting one from the database.
         If that fails, then just create the first occurrence.
         """
@@ -283,21 +283,21 @@ class OccurrenceBase(models.Model):
     
     Occurrences are not usually saved to the database, since there is potentially an infinite number of them (for events that repeat forever).
     
-    However, if a particular occurrence is changed in any way (by changing the timing parameters, or by cancelling the occurence), then it should be saved to the database as an exception.
+    However, if a particular occurrence is changed in any way (by changing the timing parameters, or by cancelling the occurrence), then it should be saved to the database as an exception.
     
-    When generating a set of occurrences, the generator should check to see if any exceptions have been saved to the databes.
+    When generating a set of occurrences, the generator should check to see if any exceptions have been saved to the database.
     """
     
     #These four work as a key to the Occurrence
     unvaried_start_date = models.DateField(db_index=True)
     unvaried_start_time = models.TimeField(db_index=True)
     unvaried_end_date = models.DateField(_("unvaried end date"), db_index=True, null=True)
-    unvaried_end_time = models.TimeField(_("unvaried end time"), db_index=True, null=True, help_text=_("if ommitted, start date is assumed"))
+    unvaried_end_time = models.TimeField(_("unvaried end time"), db_index=True, null=True, help_text=_("if omitted, start date is assumed"))
     
     # These are usually the same as the unvaried, but may not always be.
     varied_start_date = models.DateField(_("varied start date"), blank=True, null=True, db_index=True)
     varied_start_time = models.TimeField(_("varied start time"), blank=True, null=True, db_index=True)
-    varied_end_date = models.DateField(_("varied end date"), blank=True, null=True, db_index=True, help_text=_("if ommitted, start date is assumed"))
+    varied_end_date = models.DateField(_("varied end date"), blank=True, null=True, db_index=True, help_text=_("if omitted, start date is assumed"))
     varied_end_time = models.TimeField(_("varied end time"), blank=True, null=True, db_index=True)
     
     cancelled = models.BooleanField(_("cancelled"), default=False)
