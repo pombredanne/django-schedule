@@ -57,10 +57,10 @@ class EventVariationBase(models.Model):
     #injected by EventVariationModelBase:
     # unvaried_event = models.ForeignKey(somekindofEvent)
     
-    reason = models.CharField(_("Short reason for variation"), max_length = 255, help_text=_("this won't normally be shown to visitors, but is useful for identifying this variation in lists"))
+    reason = models.CharField(_("Short reason for variation"), max_length = 255, help_text=_("this is useful for identifying this variation in lists"))
 
     def __unicode__(self):
-        return self.reason
+        return "%s (%s)" % (self.unvaried_event, self.reason)
         
     class Meta:
         abstract = True
