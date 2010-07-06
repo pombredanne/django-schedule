@@ -15,7 +15,6 @@ class Rule(models.Model):
     rrule in the dateutil documentation.
 
     * name - the human friendly name of this kind of repetition.
-    * description - a short description describing this type of repetition.
     * frequency - the base repetition period
     * param - extra params required to define this type of repetition. The params
       should follow this format:
@@ -39,7 +38,6 @@ class Rule(models.Model):
         ** byeaster
     """
     name = models.CharField(_("name"), max_length=100, help_text=_("a short friendly name for this repetition."))
-    description = models.TextField(_("description"), blank=True, help_text=_("a longer description of this type of repetition."))
     common = models.BooleanField(help_text=_("common rules appear at the top of the list."))
     frequency = models.CharField(_("frequency"), choices=freqs, max_length=10, blank=True, help_text=_("the base repetition period."))
     params = models.TextField(_("inclusion parameters"), blank=True, help_text=_("extra params required to define this type of repetition."))
