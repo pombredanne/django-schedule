@@ -116,12 +116,23 @@ class EventBase(models.Model):
     # _generator_model_name
     
     __metaclass__ = EventModelBase
+    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is ommitted, an automatic description will be attempted."))
     
     objects = EventManagerBase()
     
     class Meta:
         abstract = True
 
+    def date_description(self):
+        if self._date_description:
+            return self._date_description
+        gens = self.generators.all()
+        if gens:
+            return _(", ").join([g.date_description for g in gens])
+        else:
+            return _("Date TBA")
+    date_description = property(date_description)
+    
     def _opts(self):
         return self._meta
     opts = property(_opts) #for use in templates (without underscore necessary)

@@ -1,1 +1,1 @@
-<td{% if classes %} class="{{ classes|join:" "}}"{% endif %}>{{ day.date|date:"j" }}</td> 
+<td{% if classes %} class="{{ classes|join:" "}}"{% endif %}>{% if events %}<a href="?day={{ day.date|date:"Y-m-d" }}">{% endif %}<span>{{ day.date|date:"j" }}</span>{% if events %}</a>{% endif %}</td> 

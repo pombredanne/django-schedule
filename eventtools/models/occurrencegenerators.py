@@ -7,6 +7,7 @@ from django.template.defaultfilters import date as date_filter
 from django.db import models
 from django.utils.translation import ugettext, ugettext_lazy as _
 from rules import Rule
+from utils import datetimeify
 
 """
 An OccurrenceGenerator defines the rules for generating a series of events. For example:
@@ -45,12 +46,8 @@ class OccurrenceGeneratorManager(models.Manager):
         TODO - make this a queryset function too!            
         """
         
-        if not isinstance(start, datetime.datetime):
-            start = datetime.datetime.combine(start, datetime.time.min)
-        
-        if not isinstance(end, datetime.datetime):
-            end = datetime.datetime.combine(end, datetime.time.max)
-        
+        start = datetimeify(start, "start")
+        end = datetimeify(end, 'end')    
         
         # relevant generators have
         # the first_start_date before the requested end date AND
@@ -98,11 +95,18 @@ class OccurrenceGeneratorBase(models.Model):
     rule = models.ForeignKey(Rule, verbose_name=_("repetition rule"), null = True, blank = True, help_text=_("Select '----' for a one-off event."))
     repeat_until = models.DateTimeField(null = True, blank = True, help_text=_("This date is ignored for one-off events."))
     
+    _date_description = models.CharField(_("Description of occurrences"), blank=True, max_length=255, help_text=_("e.g. \"Every Tuesday in March 2010\". If this is ommitted, an automatic description will be attempted."))
+    
     class Meta:
         ordering = ('first_start_date', 'first_start_time')
         abstract = True
         verbose_name = _('occurrence generator')
         verbose_name_plural = _('occurrence generators')
+        
+    def date_description(self):
+        if self._date_description:
+            return self._date_description
+        return unicode(self)
 
     def _occurrence_model(self):
         return models.get_model(self._meta.app_label, self._occurrence_model_name)
@@ -205,6 +209,10 @@ class OccurrenceGeneratorBase(models.Model):
         returns a list of occurrences between the datetimes ``start`` and ``end``.
         Includes all of the exceptional Occurrences.
         """
+        
+        start = datetimeify(start)
+        end = datetimeify(end)
+        
         exceptional_occurrences = self.occurrences.all()
         occ_replacer = OccurrenceReplacer(exceptional_occurrences)
         occurrences = self._get_occurrence_list(start, end)

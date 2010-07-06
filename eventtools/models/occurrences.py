@@ -126,6 +126,15 @@ class OccurrenceBase(models.Model):
         return self.varied_end_time #being canonical
     end_time = property(_end_time)
 
+    def _start_date(self):
+        return self.varied_start_date #being canonical
+    start_date = property(_start_date)
+    
+    def _end_date(self):
+        return self.varied_end_date #being canonical
+    end_date = property(_end_date)
+
+
     def cancel(self):
         self.cancelled = True
         self.save()

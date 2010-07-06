@@ -1,4 +1,13 @@
 # −*− coding: UTF−8 −*−
+from datetime import datetime, date, time
+
+def datetimeify(d, clamp="start"):
+    if isinstance(d, datetime):
+        return d
+    if clamp.lower()=="end":
+        return datetime.combine(d, time.max)
+    return datetime.combine(d, time.min)
+
 class MergedObject():
     """
     Objects of this class behave as though they are a merge of two other objects (which we'll call General and Special). The attributes of Special override the corresponding attributes of General, *unless* the value of the attribute in Special == None.
