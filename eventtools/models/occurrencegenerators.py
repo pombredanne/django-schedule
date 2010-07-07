@@ -9,7 +9,6 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from rules import Rule
 from utils import datetimeify
 
-from django.core.exceptions import ValidationError
 
 """
 An OccurrenceGenerator defines the rules for generating a series of events. For example:
@@ -141,18 +140,6 @@ class OccurrenceGeneratorBase(models.Model):
         
         return result
         
-    # def clean(self):
-    #         """
-    #         validation:
-    #         if we can create an okay date description from the dates and rules given, then that's fine
-    #         if not, raise a validation error asking the user to describe the date rules.
-    #         """
-    #         
-    #         try:
-    #             self._date_description = self.robot_description()
-    #         except: # can't do robot description
-    #             raise ValidationError("Sorry, we can't figure out a nice way to describe the occurrence: please add your own.")
-    
     def _occurrence_model(self):
         return models.get_model(self._meta.app_label, self._occurrence_model_name)
     OccurrenceModel = property(_occurrence_model)

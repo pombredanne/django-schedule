@@ -7,6 +7,8 @@ import sys
 from occurrencegenerators import *
 from occurrences import *
 
+from django.core.exceptions import ValidationError
+
 """
 When you subclass EventBase (further down), two more models are injected into your app by EventModelBase (just below).
 
@@ -152,7 +154,17 @@ class EventBase(models.Model):
     def _has_multiple_occurrences(self):
         return self.generators.count() > 1 or (self.generators.count() > 0 and self.generators.all()[0].rule != None)
     has_multiple_occurrences = property(_has_multiple_occurrences)
-
+    
+    def clean(self):
+        """
+        validation:
+        if there are variations, throw a validation error.
+        (otherwise, the normal date_description function is used).
+        """
+        if self.variations_count() > 0:
+            raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
+ 
+ 
     def get_first_generator(self):
         return self.generators.order_by('first_start_date', 'first_start_time')[0]
     first_generator = get_first_generator
