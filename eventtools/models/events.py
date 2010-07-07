@@ -128,7 +128,7 @@ class EventBase(models.Model):
             return self._date_description
         gens = self.generators.all()
         if gens:
-            return _(", ").join([g.date_description for g in gens])
+            return _("\n ").join([g.date_description() for g in gens])
         else:
             return _("Date TBA")
     date_description = property(date_description)
