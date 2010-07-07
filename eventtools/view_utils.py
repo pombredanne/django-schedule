@@ -62,7 +62,7 @@ def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, mi
     if dr['uses_defaults']:
         description = ""
     else:
-        description = humanized_date_range(dr['from'], dr['to'])
+        description = humanized_date_range(dr['from'], dr['to'], imply_year=False)
     
     dr.update({
         'months': months,

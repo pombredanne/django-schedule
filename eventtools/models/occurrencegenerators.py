@@ -9,6 +9,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from rules import Rule
 from utils import datetimeify
 
+
 """
 An OccurrenceGenerator defines the rules for generating a series of events. For example:
 	• One occurrence, Tuesday 18th August 2010, 1500-1600
@@ -91,7 +92,7 @@ class OccurrenceGeneratorBase(models.Model):
     first_start_date = models.DateField(_('start date of the first occurrence'))
     first_start_time = models.TimeField(_('start time of the first occurrence'))
     first_end_date = models.DateField(_('end date of the first occurrence'), null = True, blank = True, help_text=_("if you leave this blank, the same date as Start Date is assumed.")) 
-    first_end_time = models.TimeField(_('start time of the first occurrence'))
+    first_end_time = models.TimeField(_('end time of the first occurrence'))
     rule = models.ForeignKey(Rule, verbose_name=_("repetition rule"), null = True, blank = True, help_text=_("Select '----' for a one-off event."))
     repeat_until = models.DateTimeField(null = True, blank = True, help_text=_("This date is ignored for one-off events."))
     
@@ -106,8 +107,39 @@ class OccurrenceGeneratorBase(models.Model):
     def date_description(self):
         if self._date_description:
             return self._date_description
-        return unicode(self)
-
+        return self.robot_description()
+    
+    def robot_description(self):
+        """
+        there is always:
+            - start date
+            - start time
+            - end time
+        "Monday, 1 January, 7pm to 10pm"
+        sometimes:
+            - end date, if different from start date
+            "Monday, 1 January to Wednesday, 3 January, 7pm to 10pm" 
+            - rule
+            As above, but starting with "Weekly from..."
+            - repeat until
+            As above but ending with "...until 5 January"
+        """
+        
+        result = datetime.datetime.strftime(self.first_start_date, "%A %d %B")
+        result += ", %s" % datetime.time.strftime(self.first_start_time, "%I:%M%p").lstrip('0').replace(':00', '')
+        result += " to %s" % datetime.time.strftime(self.first_end_time, "%I:%M%p").lstrip('0').replace(':00', '')
+        
+        if self.first_end_date and (self.first_start_date != self.first_end_date):
+            result += " %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B")
+        
+        if self.rule:
+            result = "%s from %s" % (self.rule, result)
+            
+        if self.repeat_until:
+            result += " until %s" % datetime.datetime.strftime(self.repeat_until, "%A %d %B")
+        
+        return result
+        
     def _occurrence_model(self):
         return models.get_model(self._meta.app_label, self._occurrence_model_name)
     OccurrenceModel = property(_occurrence_model)
