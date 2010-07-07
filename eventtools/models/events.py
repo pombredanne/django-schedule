@@ -163,7 +163,7 @@ class EventBase(models.Model):
         """
         if self.variations_count() > 0:
             raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
- 
+        
  
     def get_first_generator(self):
         return self.generators.order_by('first_start_date', 'first_start_time')[0]
@@ -206,7 +206,10 @@ class EventBase(models.Model):
         returns the number of variations that this event has
         """
         if self.__class__.varied_by:
-            return self.variations.count()
+            try:
+                return self.variations.count()
+            except: # if none have been created, there is no such thing as self.variations, so return 0
+                return 0
         else:
             return "N/A"  
     variations_count.short_description = _("# Variations")
