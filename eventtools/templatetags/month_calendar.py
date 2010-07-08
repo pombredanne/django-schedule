@@ -3,6 +3,8 @@ from datetime import date, timedelta
 from dateutil.relativedelta import *
 from django import template
 
+from eventtools.models.events import EventBase
+
 register = template.Library()
 
 def month_calendar(events_pool=[], month=None, show_header=True, selected_start=None, selected_end=None, week_start=0, ):
@@ -27,6 +29,9 @@ def month_calendar(events_pool=[], month=None, show_header=True, selected_start=
     month_calendar = cal.monthdatescalendar(month.year, month.month)
     
     events_by_date = {}
+    
+    if isinstance(events_pool, EventBase):
+        events_pool = [events_pool]
     
     for event in events_pool:
         occs = event.get_occurrences(month_calendar[0][0], month_calendar[-1][-1])
