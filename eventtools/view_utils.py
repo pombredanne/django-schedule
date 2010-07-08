@@ -12,18 +12,21 @@ def clamp_to_start(d):
 def clamp_to_end(d):
     return date(d.year, d.month, days_in_month(d))
 
-def get_date_range(fr=None, to=None, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_month=True):
+def get_date_range(fr=None, to=None, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True):
     """
     If not from and not to, use defaults, optionally clamped to start and end of month
     Elif from and not to, to = from+min_span, optionally clamped to end of month
     Elif to and not from, from = to - min_span, optionally clamped to end of month
     """
     
-    if clamp_month:
+    if clamp_start:
         _clamp_to_start = clamp_to_start
-        _clamp_to_end = clamp_to_end
     else:
         _clamp_to_start = lambda x: x
+        
+    if clamp_end:
+        _clamp_to_end = clamp_to_end
+    else:
         _clamp_to_end = lambda x: x
     
     if not default_to:
@@ -48,8 +51,8 @@ def get_date_range(fr=None, to=None, default_fr=date.today(), default_to=None, m
         'uses_defaults': (fr == _clamp_to_start(default_fr)) and (to == _clamp_to_end(default_to)),
     }
     
-def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_month=True):
-    dr = get_date_range(fr, to, default_fr, default_to, min_span, clamp_month)
+def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True):
+    dr = get_date_range(fr, to, default_fr, default_to, min_span, clamp_start, clamp_end)
     
     d1 = clamp_to_start(dr['from'])
     d2 = clamp_to_start(dr['to'])
@@ -73,7 +76,7 @@ def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, mi
     
     return dr
     
-def get_date_info_from_request(request, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_month=True):
+def get_date_info_from_request(request, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True):
     month = request.GET.get('month', None)
     day = request.GET.get('day', None)
     fr = request.GET.get('from', None)
@@ -93,4 +96,4 @@ def get_date_info_from_request(request, default_fr=date.today(), default_to=None
         if to:
             to = dateparser.parse(to).date()
     
-    return get_date_info(fr, to, default_fr, default_to, min_span, clamp_month)
+    return get_date_info(fr, to, default_fr, default_to, min_span, clamp_start, clamp_end)
