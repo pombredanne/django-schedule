@@ -161,7 +161,7 @@ class EventBase(models.Model):
         if there are variations, throw a validation error.
         (otherwise, the normal date_description function is used).
         """
-        if self.variations_count() > 0:
+        if self.variations_count() > 0 and not self.date_description:
             raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
         
  
