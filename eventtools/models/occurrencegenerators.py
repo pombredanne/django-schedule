@@ -92,7 +92,7 @@ class OccurrenceGeneratorBase(models.Model):
     first_start_date = models.DateField(_('start date of the first occurrence'))
     first_start_time = models.TimeField(_('start time of the first occurrence'))
     first_end_date = models.DateField(_('end date of the first occurrence'), null = True, blank = True, help_text=_("if you leave this blank, the same date as Start Date is assumed.")) 
-    first_end_time = models.TimeField(_('end time of the first occurrence'))
+    first_end_time = models.TimeField(_('end time of the first occurrence'), null = True, blank = True, help_text=_("if you leave this blank, the same time as Start Time is assumed."))
     rule = models.ForeignKey(Rule, verbose_name=_("repetition rule"), null = True, blank = True, help_text=_("Select '----' for a one-off event."))
     repeat_until = models.DateTimeField(null = True, blank = True, help_text=_("This date is ignored for one-off events."))
     
@@ -114,9 +114,10 @@ class OccurrenceGeneratorBase(models.Model):
         there is always:
             - start date
             - start time
-            - end time
-        "Monday, 1 January, 7pm to 10pm"
+        "Monday, 1 January, 7pm"
         sometimes:
+            - end time, if different from start time
+            "Monday, 1 January, 7pm to 10pm"
             - end date, if different from start date
             "Monday, 1 January to Wednesday, 3 January, 7pm to 10pm" 
             - rule
@@ -126,11 +127,12 @@ class OccurrenceGeneratorBase(models.Model):
         """
         
         result = datetime.datetime.strftime(self.first_start_date, "%A %d %B")
-        result += ", %s" % datetime.time.strftime(self.first_start_time, "%I:%M%p").lstrip('0').replace(':00', '')
-        result += " to %s" % datetime.time.strftime(self.first_end_time, "%I:%M%p").lstrip('0').replace(':00', '')
-        
         if self.first_end_date and (self.first_start_date != self.first_end_date):
-            result += " %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B")
+            result += " to %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B")
+
+        result += ", %s" % datetime.time.strftime(self.first_start_time, "%I:%M%p").lstrip('0').replace(':00', '')
+        if self.first_end_time and (self.first_start_time != self.first_end_time):
+            result += " to %s" % datetime.time.strftime(self.first_end_time, "%I:%M%p").lstrip('0').replace(':00', '')
         
         if self.rule:
             result = "%s from %s" % (self.rule, result)
@@ -221,7 +223,7 @@ class OccurrenceGeneratorBase(models.Model):
     end_time = property(_get_end_time, _set_end_time)    
         
     def _end(self):
-        return datetime.datetime.combine(self.first_end_date or self.first_start_date, self.first_end_time)
+        return datetime.datetime.combine(self.first_end_date or self.first_start_date, self.first_end_time or self.first_start_time)
     end = property(_end)
 
     def __unicode__(self):
