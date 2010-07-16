@@ -38,7 +38,7 @@ class TestModelMetaClass(TestCase):
             self.assertTrue(isinstance(gen.event, ReverseSingleRelatedObjectDescriptor))
             
             #...and that the occurrence model is linked properly to the generator
-            self.assertEqual(gen._occurrence_model_name, occ.__name__.lower())
+            self.assertEqual(gen._occurrence_model_name.lower(), occ.__name__.lower())
 
 class TestModel(TestCase):
     def test_event_without_variation(self):
