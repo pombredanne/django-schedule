@@ -79,30 +79,36 @@ class EventModelBase(ModelBase):
             cls.add_to_class('_generator_model_name', gen_name)
         
             # Create the generator class
-            # globals()[gen_name] # < injecting into globals doesn't work with some of django's import magic. We have to inject the new class directly into the module that contains the EventBase subclass. I am AMAZED that you can do this, and have it still work for future imports.
-            setattr(sys.modules[cls.__module__], gen_name, type(gen_name,
-                    (OccurrenceGeneratorBase,),
-                    dict(__module__ = cls.__module__,),
-                )
-            )
-            generator_class = sys.modules[cls.__module__].__dict__[gen_name]
+            generator_fields = {
+                '__module__': cls.__module__,
+                'event': models.ForeignKey(cls, related_name = 'generators'),
+                '_occurrence_model_name': occ_name,
+            }
+            generator_class = type(gen_name, (OccurrenceGeneratorBase,), generator_fields)
+            # This will also work:
+            #generator_class = ModelBase.__new__(ModelBase, gen_name, (OccurrenceGeneratorBase,), generator_fields)
+
+            # Inject the model into its parent module
+            setattr(sys.modules[cls.__module__], gen_name, generator_class)
             
-            # add a foreign key back to the event class
-            generator_class.add_to_class('event', models.ForeignKey(cls, related_name = 'generators'))
-
             # Create the occurrence class
-            # globals()[occ_name]
-            setattr(sys.modules[cls.__module__], occ_name, type(occ_name,
-                    (OccurrenceBase,),
-                    dict(__module__ = cls.__module__,),
-                )
-            )
-            occurrence_class = sys.modules[cls.__module__].__dict__[occ_name]
-
-            occurrence_class.add_to_class('generator', models.ForeignKey(generator_class, related_name = 'occurrences'))
+            occurrence_fields = {
+                '__module__': cls.__module__,
+                'generator': models.ForeignKey(generator_class, related_name = 'occurrences'),
+            }
             if hasattr(cls, 'varied_by'):
-               occurrence_class.add_to_class('_varied_event', models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True))
-               # we need to add an unvaried_event FK into the variation class, BUT at this point the variation class hasn't been defined yet. For now, let's insist that this is done by using a base class for variation.
+                occurrence_fields['_varied_event'] = models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True)
+                # we need to add an unvaried_event FK into the variation class, BUT at this point the
+                # variation class hasn't been defined yet. For now, let's insist that this is done by
+                # using a base class for variation.
+            occurrence_class = type(occ_name, (OccurrenceBase,), occurrence_fields)
+            
+            # Inject it into its rightful module
+            setattr(sys.modules[cls.__module__], occ_name, occurrence_class)
+            
+            # Undocumented Django API: this regenerates the related objects cache for the EventBase
+            # derived model, ensuring that delete() calls catch its occurrences and occurrence generators 
+            cls._meta._fill_related_objects_cache()
 
         super(EventModelBase, cls).__init__(name, bases, attrs)
 
@@ -171,7 +177,7 @@ class EventBase(models.Model):
             
     def get_first_occurrence(self):
         try:
-            return self.first_generator().get_first_occurrence()		
+            return self.first_generator().get_first_occurrence()
         except IndexError:
             raise IndexError("This Event type has no generators defined")
     get_one_occurrence = get_first_occurrence # for backwards compatibility
@@ -257,5 +263,5 @@ class EventBase(models.Model):
         if last:
             period = Period(self.generators.all(), first, last)
         else:
-            period = Period(self.generators.all(), datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(days=num_days))		
+            period = Period(self.generators.all(), datetime.datetime.now(), datetime.datetime.now() + datetime.timedelta(days=num_days))
         return period.get_occurrences()

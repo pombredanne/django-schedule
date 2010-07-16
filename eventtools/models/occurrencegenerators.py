@@ -63,25 +63,11 @@ class OccurrenceGeneratorManager(models.Manager):
         
         return sorted(occurrences)
 
-
-
-class OccurrenceGeneratorModelBase(ModelBase):
-    """
-    When we create an OccurrenceGenerator, add to it an occurrence_model_name so it knows what to generate.
-    """
-    
-    def __init__(cls, name, bases, attrs):
-        if name != 'OccurrenceGeneratorBase': # This should only fire if this is a subclass
-            model_name = name[0:-len("Generator")].lower()
-            cls.add_to_class('_occurrence_model_name', model_name)
-        super(OccurrenceGeneratorModelBase, cls).__init__(name, bases, attrs)
-    
 class OccurrenceGeneratorBase(models.Model):
     """
     Defines a set of repetition rules for an event
     """
     
-    __metaclass__ = OccurrenceGeneratorModelBase
     objects = OccurrenceGeneratorManager()
     # Injected by EventModelBase:
     # event = models.ForeignKey(somekindofEvent)
