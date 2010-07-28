@@ -102,10 +102,8 @@ class OccurrenceGeneratorBase(models.Model):
             - start time
         "Monday, 1 January, 7pm"
         sometimes:
-            - end time, if different from start time
-            "Monday, 1 January, 7pm to 10pm"
             - end date, if different from start date
-            "Monday, 1 January to Wednesday, 3 January, 7pm to 10pm" 
+            "Monday, 1 January to Wednesday, 3 January, 7pm" 
             - rule
             As above, but starting with "Weekly from..."
             - repeat until
@@ -117,8 +115,6 @@ class OccurrenceGeneratorBase(models.Model):
             result += " to %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B")
 
         result += ", %s" % datetime.time.strftime(self.first_start_time, "%I:%M%p").lstrip('0').replace(':00', '')
-        if self.first_end_time and (self.first_start_time != self.first_end_time):
-            result += " to %s" % datetime.time.strftime(self.first_end_time, "%I:%M%p").lstrip('0').replace(':00', '')
         
         if self.rule:
             result = "%s from %s" % (self.rule, result)
@@ -241,9 +237,11 @@ class OccurrenceGeneratorBase(models.Model):
             # replace occurrences with their exceptional counterparts
             if occ_replacer.has_occurrence(occ):
                 p_occ = occ_replacer.get_occurrence(occ)
-                # ...but only if they are within this period
-                if p_occ.start < end and p_occ.end >= start:
-                    final_occurrences.append(p_occ)
+                # ...but only if they're not hidden
+                if not p_occ.hide_from_lists:
+                    # ...but only if they are within this period
+                    if p_occ.start < end and p_occ.end >= start:
+                        final_occurrences.append(p_occ)
             else:
               final_occurrences.append(occ)
         # then add exceptional occurrences which originated outside of this period but now

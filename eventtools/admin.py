@@ -34,11 +34,12 @@ def create_occurrence_admin_form(occurrence_class):
         
         def __init__(self, *args, **kwargs):
             super(OccurrenceAdminForm, self).__init__(*args, **kwargs)
-            instance = kwargs.pop("instance")
-            choices = [(ev.id, ev.reason) for ev in variation_class.objects.filter(unvaried_event=instance.unvaried_event)]
-        
-            varied_event = self.fields['_varied_event']
-            varied_event.choices = choices
+            # we need the nothing-choice, why are we doing otherwise here:?
+            # instance = kwargs.pop("instance")
+            #             choices = [(ev.id, ev.reason) for ev in variation_class.objects.filter(unvaried_event=instance.unvaried_event)]
+            #         
+            #             varied_event = self.fields['_varied_event']
+            #             varied_event.choices = choices
         
     return OccurrenceAdminForm
     

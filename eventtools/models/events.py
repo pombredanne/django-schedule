@@ -97,7 +97,7 @@ class EventModelBase(ModelBase):
                 'generator': models.ForeignKey(generator_class, related_name = 'occurrences'),
             }
             if hasattr(cls, 'varied_by'):
-                occurrence_fields['_varied_event'] = models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True)
+                occurrence_fields['_varied_event'] = models.ForeignKey(cls.varied_by, related_name = 'occurrences', null=True,blank=True,help_text="Create or add a variation to alter venue, price, description, etc...")
                 # we need to add an unvaried_event FK into the variation class, BUT at this point the
                 # variation class hasn't been defined yet. For now, let's insist that this is done by
                 # using a base class for variation.
