@@ -28,7 +28,7 @@ def occurrences(request, id, modeladmin):
         hasnext = True
     else:
         hasnext = last > period.end 
-    occurrences = period.get_occurrences()
+    occurrences = period.get_even_hidden_occurrences()
     title = _("Select an occurrence to change")
     
     admin_url_name = ('admin:%s_%s_change' % (EventModel._meta.app_label, event.OccurrenceModel.__name__)).lower()

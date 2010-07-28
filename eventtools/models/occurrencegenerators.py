@@ -220,7 +220,7 @@ class OccurrenceGeneratorBase(models.Model):
             
         return result
 
-    def get_occurrences(self, start, end):
+    def get_occurrences(self, start, end, hide_hidden=True):
         """
         returns a list of occurrences between the datetimes ``start`` and ``end``.
         Includes all of the exceptional Occurrences.
@@ -237,8 +237,8 @@ class OccurrenceGeneratorBase(models.Model):
             # replace occurrences with their exceptional counterparts
             if occ_replacer.has_occurrence(occ):
                 p_occ = occ_replacer.get_occurrence(occ)
-                # ...but only if they're not hidden
-                if not p_occ.hide_from_lists:
+                # ...but only if they're not hidden and you want to see them
+                if not (hide_hidden and p_occ.hide_from_lists):
                     # ...but only if they are within this period
                     if p_occ.start < end and p_occ.end >= start:
                         final_occurrences.append(p_occ)
