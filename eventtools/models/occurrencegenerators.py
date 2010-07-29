@@ -110,9 +110,9 @@ class OccurrenceGeneratorBase(models.Model):
             As above but ending with "...until 5 January"
         """
         
-        result = datetime.datetime.strftime(self.first_start_date, "%A %d %B")
+        result = datetime.datetime.strftime(self.first_start_date, "%A %d %B %Y")
         if self.first_end_date and (self.first_start_date != self.first_end_date):
-            result += " to %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B")
+            result += " to %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B %Y")
 
         result += ", %s" % datetime.time.strftime(self.first_start_time, "%I:%M%p").lstrip('0').replace(':00', '')
         
@@ -120,7 +120,7 @@ class OccurrenceGeneratorBase(models.Model):
             result = "%s from %s" % (self.rule, result)
             
         if self.repeat_until:
-            result += " until %s" % datetime.datetime.strftime(self.repeat_until, "%A %d %B")
+            result += " until %s" % datetime.datetime.strftime(self.repeat_until, "%A %d %B %Y")
         
         return result
         
@@ -141,6 +141,12 @@ class OccurrenceGeneratorBase(models.Model):
         return occ
  
     def _end_recurring_period(self):
+        # if there's no repeat_until AND no rule, then just return your end date, or your start date
+        if not self.repeat_until and not self.rule:
+            if self.first_end_date:
+                return datetime.datetime.combine(self.first_end_date, self.first_end_time)
+            return datetime.datetime.combine(self.first_start_date, self.first_start_time)
+        
         return self.repeat_until
     end_recurring_period = property(_end_recurring_period)
 
@@ -251,30 +257,18 @@ class OccurrenceGeneratorBase(models.Model):
         # import pdb; pdb.set_trace()
         return final_occurrences
     
-    def get_changed_occurrences(self, start, end):
+    def get_changed_occurrences(self):
         """
         return ONLY a list of exceptional Occurrences.
         """
         
-        start = datetimeify(start)
-        end = datetimeify(end)
-        
         exceptional_occurrences = self.occurrences.all()
-        occ_replacer = OccurrenceReplacer(exceptional_occurrences)
-        occurrences = self._get_occurrence_list(start, end)
         changed_occurrences = []
-        for occ in occurrences:
-            # replace occurrences with their exceptional counterparts
-            if occ_replacer.has_occurrence(occ):
-                p_occ = occ_replacer.get_occurrence(occ)
-                # ...but only if they're not hidden
-                if not p_occ.hide_from_lists:
-                    # ...but only if they are within this period
-                    if p_occ.start < end and p_occ.end >= start:
-                        changed_occurrences.append(p_occ)
-        # then add exceptional occurrences which originated outside of this period but now
-        # fall within it
-        changed_occurrences += occ_replacer.get_additional_occurrences(start, end)
+        
+        for occ in exceptional_occurrences:
+            if not occ.hide_from_lists:
+                # ...but only if they are within this period
+                changed_occurrences.append(occ)
 
         # import pdb; pdb.set_trace()
         return changed_occurrences

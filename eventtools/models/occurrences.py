@@ -24,14 +24,14 @@ class OccurrenceBase(models.Model):
     #These four work as a key to the Occurrence
     unvaried_start_date = models.DateField(db_index=True)
     unvaried_start_time = models.TimeField(db_index=True)
-    unvaried_end_date = models.DateField(_("unvaried end date"), db_index=True, null=True)
+    unvaried_end_date = models.DateField(_("unvaried end date"), db_index=True, null=True, help_text=_("if omitted, start time is assumed"))
     unvaried_end_time = models.TimeField(_("unvaried end time"), db_index=True, null=True, help_text=_("if omitted, start date is assumed"))
     
     # These are usually the same as the unvaried, but may not always be.
     varied_start_date = models.DateField(_("varied start date"), blank=True, null=True, db_index=True)
     varied_start_time = models.TimeField(_("varied start time"), blank=True, null=True, db_index=True)
     varied_end_date = models.DateField(_("varied end date"), blank=True, null=True, db_index=True, help_text=_("if omitted, start date is assumed"))
-    varied_end_time = models.TimeField(_("varied end time"), blank=True, null=True, db_index=True)
+    varied_end_time = models.TimeField(_("varied end time"), blank=True, null=True, db_index=True, help_text=_("if omitted, start time is assumed"))
     
     cancelled = models.BooleanField(_("cancelled"), default=False)
     hide_from_lists = models.BooleanField(_("hide_from_lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
