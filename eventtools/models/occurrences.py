@@ -171,6 +171,13 @@ class OccurrenceBase(models.Model):
             'start': self.varied_start.strftime('%a, %d %b %Y %H:%M'),
             'end': self.varied_end.strftime('%a, %d %b %Y %H:%M'),
         }
+    
+    @property
+    def date_description(self):
+        return ugettext("%(day)s, %(time)s") % {
+            'day': self.varied_start.strftime('%a, %d %b %Y'),
+            'time': self.varied_start.strftime('%H:%M'),
+        }
         
     @property
     def as_icalendar(self):
@@ -182,3 +189,39 @@ class OccurrenceBase(models.Model):
         ical.vevent.add('dtstart').value = datetime.datetime.combine(self.start_date, self.start_time) 
         ical.vevent.add('dtend').value = datetime.datetime.combine(self.end_date, self.end_time)
         return ical 
+
+    @property
+    def reason(self):
+        # varied event reason trumps all
+        if self.varied_event:
+            return self.varied_event.reason
+        
+        # cancellation trumps date/time changes
+        if self.cancelled:
+            return "Cancelled"
+
+        """
+        if start_date is different:
+            "moved to " start_date
+        if start_time or end_time are less than the original:
+            "starts earlier, at " start_time/end_time
+        if start_time or end_time are greater than the original:
+            "finishes later, at " start_time/end_time
+        """
+
+        messages = []
+        if self.varied_start_date != self.unvaried_start_date:
+            messages.append("new date")
+        
+        if self.varied_start_time < self.unvaried_start_time:
+            messages.append("starts earlier at %s" % self.varied_start_time.strftime("%H:%M"))
+        elif self.varied_start_time > self.unvaried_start_time:
+            messages.append("starts later at %s" % self.varied_start_time.strftime("%H:%M"))
+            
+        if self.varied_end_time < self.unvaried_end_time:
+            messages.append("ends earlier at %s" % self.varied_end_time.strftime("%H:%M"))
+        elif self.varied_end_time > self.unvaried_end_time:
+            messages.append("ends later at %s" % self.varied_end_time.strftime("%H:%M"))
+        
+        return ", ".join(messages)
+        

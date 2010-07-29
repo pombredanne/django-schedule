@@ -187,7 +187,25 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_occurrences(start, end)
         return sorted(occs)
+    
+    def get_changed_occurrences(self, start, end):
+        """
+        return all the variation occurrences as well as
+        the occurences which have changed (different time, date, or cancelled)
+        """
+        occs = []
+        variation_occs = []
         
+        # get the variations
+        for variation in self.variations.all():
+            variation_occs += list(variation.occurrences.all())
+        
+        # also get the changed occurrences
+        for gen in self.generators.all():
+            occs += gen.get_changed_occurrences(start, end)
+        
+        return set(sorted(occs + variation_occs))
+    
     def get_last_day(self):
         lastdays = []
         for generator in self.generators.all():
