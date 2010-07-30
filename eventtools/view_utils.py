@@ -72,8 +72,8 @@ def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, mi
         'description': description,
         'next_month': months[-1] + relativedelta(months=1),
         'prev_month': months[0] - relativedelta(months=1),
-        'next_day': fr + timedelta(1),
-        'prev_day': fr - timedelta(1),
+        'next_day': dr['from'] + timedelta(1),
+        'prev_day': dr['from'] - timedelta(1),
     })
     
     return dr
