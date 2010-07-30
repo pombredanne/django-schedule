@@ -182,10 +182,10 @@ class EventBase(models.Model):
             raise IndexError("This Event type has no generators defined")
     get_one_occurrence = get_first_occurrence # for backwards compatibility
     
-    def get_occurrences(self, start, end):
+    def get_occurrences(self, start, end, hide_hidden=True):
         occs = []
         for gen in self.generators.all():
-            occs += gen.get_occurrences(start, end)
+            occs += gen.get_occurrences(start, end, hide_hidden)
         return sorted(occs)
     
     def get_changed_occurrences(self):
