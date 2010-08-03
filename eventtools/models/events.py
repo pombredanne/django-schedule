@@ -213,7 +213,10 @@ class EventBase(models.Model):
                 return False
             lastdays.append(generator.end_recurring_period)
         lastdays.sort()
-        return lastdays[-1]
+        try:
+            return lastdays[-1]
+        except IndexError:
+            return None
 
     def edit_occurrences_link(self):
         """ An admin link """
