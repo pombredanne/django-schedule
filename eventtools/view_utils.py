@@ -48,7 +48,7 @@ def get_date_range(fr=None, to=None, default_fr=date.today(), default_to=None, m
     return {
         'from': fr,
         'to': to,
-        'uses_defaults': (fr == _clamp_to_start(default_fr)) and (to == _clamp_to_end(default_to)),
+        'uses_defaults': (to == fr) or ((fr == _clamp_to_start(default_fr)) and (to == _clamp_to_end(default_to))),
     }
     
 def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True):
