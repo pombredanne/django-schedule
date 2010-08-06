@@ -78,9 +78,9 @@ def get_date_info(fr=None, to=None, default_fr=date.today(), default_to=None, mi
     
     return dr
     
-def get_date_info_from_request(request, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True):
+def get_date_info_from_request(request, default_fr=date.today(), default_to=None, min_span=DEFAULT_SPAN_DAYS, clamp_start=True, clamp_end=True, day=None):
     month = request.GET.get('month', None)
-    day = request.GET.get('day', None)
+    day = request.GET.get('day', None) or day
     fr = request.GET.get('from', None)
     to = request.GET.get('to', None)
     
