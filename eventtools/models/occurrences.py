@@ -225,3 +225,10 @@ class OccurrenceBase(models.Model):
         
         return ", ".join(messages)
         
+    @property
+    def generated_id(self):
+        """
+        this occurrence is unique for an EVENT (the un/varied event) and for a particular DAY (start) and a particular place in a list
+        """
+        occurrence_list = self.generator.event.get_occurrences(self.start, self.start + datetime.timedelta(1))
+        return occurrence_list.index(self)
