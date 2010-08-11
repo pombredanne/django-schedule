@@ -212,6 +212,8 @@ class EventBase(models.Model):
             if not generator.end_recurring_period:
                 return False
             lastdays.append(generator.end_recurring_period)
+            for varied in generator.get_changed_occurrences():
+                lastdays.append(varied.varied_end)
         lastdays.sort()
         try:
             return lastdays[-1]
