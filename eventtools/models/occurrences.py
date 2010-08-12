@@ -230,5 +230,6 @@ class OccurrenceBase(models.Model):
         """
         this occurrence is unique for an EVENT (the un/varied event) and for a particular DAY (start) and a particular place in a list
         """
-        occurrence_list = self.generator.event.get_occurrences(self.start, self.start + datetime.timedelta(1))
+        daystart = self.start.replace(hour=0, minute=0)
+        occurrence_list = self.generator.event.get_occurrences(daystart, daystart + datetime.timedelta(1))
         return occurrence_list.index(self)
