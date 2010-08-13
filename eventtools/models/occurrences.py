@@ -74,7 +74,7 @@ class OccurrenceBase(models.Model):
     start = varied_start = property(_get_varied_start, _set_varied_start)
     
     def _get_varied_end(self):
-        return datetime.datetime.combine(self.varied_end_date or self.varied_start_date, self.varied_end_time)
+        return datetime.datetime.combine(self.varied_end_date or self.varied_start_date, self.varied_end_time or self.varied_start_time)
     def _set_varied_end(self, value):
         self.varied_end_date = value.date
         self.varied_end_time = value.time  

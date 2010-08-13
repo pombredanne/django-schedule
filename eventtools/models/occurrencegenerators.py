@@ -144,7 +144,7 @@ class OccurrenceGeneratorBase(models.Model):
         # if there's no repeat_until AND no rule, then just return your end date, or your start date
         if not self.repeat_until and not self.rule:
             if self.first_end_date:
-                return datetime.datetime.combine(self.first_end_date, self.first_end_time)
+                return datetime.datetime.combine(self.first_end_date, self.first_end_time or self.first_start_time)
             return datetime.datetime.combine(self.first_start_date, self.first_start_time)
         
         return self.repeat_until
