@@ -1,6 +1,7 @@
 # −*− coding: UTF−8 −*−
 from django.db import models
 import datetime
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext, ugettext_lazy as _
 from utils import MergedObject
 from vobject import iCalendar
@@ -36,7 +37,14 @@ class OccurrenceBase(models.Model):
     cancelled = models.BooleanField(_("cancelled"), default=False)
     hide_from_lists = models.BooleanField(_("hide_from_lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
 
-    
+
+    class Meta:
+        verbose_name = _("occurrence")
+        verbose_name_plural = _("occurrences")
+        abstract = True
+        unique_together = ('generator', 'unvaried_start_date', 'unvaried_start_time', 'unvaried_end_date', 'unvaried_end_time')
+
+
     def __init__(self, *args, **kwargs):
         """by default, create items with varied values the same as unvaried"""
         
@@ -55,11 +63,36 @@ class OccurrenceBase(models.Model):
         super(OccurrenceBase, self).__init__(*args, **kwargs)
     
     
-    class Meta:
-        verbose_name = _("occurrence")
-        verbose_name_plural = _("occurrences")
-        abstract = True
-        unique_together = ('generator', 'unvaried_start_date', 'unvaried_start_time', 'unvaried_end_date', 'unvaried_end_time')
+    def clean(self):
+        """ Check that the end datetime must be after start date for both unvaried and varied fields.
+        Theoretically, we don't need to check the unvaried fields since the OccurrenceGeneratorBase.clean does
+        validation but we'd rather be safe than sorry.
+        """
+        ### unvaried fields
+        uv_start_datetime = datetime.datetime.combine(self.unvaried_start_date, self.unvaried_start_time)
+
+        # default to start_date and start_time for nullable uv_end_* fields
+        uv_end_date = self.unvaried_end_date or self.unvaried_start_date
+        uv_end_time = self.unvaried_end_time or self.unvaried_start_time
+        uv_end_datetime = datetime.datetime.combine(uv_end_date, uv_end_time)
+
+        if uv_end_datetime <= uv_start_datetime:
+            raise ValidationError(_("unvaried end date (%s) must be greater than start date (%s) "
+                                    "- check your occurrence generator") % (uv_end_datetime,
+                                                                            uv_start_datetime))
+
+        ### varied fields
+        varied_start_datetime = datetime.datetime.combine(self.varied_start_date, self.varied_start_time)
+
+        # default to start_date and start_time for nullable varied_end_* fields
+        varied_end_date = self.varied_end_date or self.varied_start_date
+        varied_end_time = self.varied_end_time or self.varied_start_time
+        varied_end_datetime = datetime.datetime.combine(varied_end_date, varied_end_time)
+
+        if varied_end_datetime <= varied_start_datetime:
+            raise ValidationError(_("end date (%s) must be greater than start date (%s).") % (varied_end_datetime,
+                                                                                              varied_start_datetime))
+
 
     def _merged_event(self): #bit slow, but friendly
         return MergedObject(self.unvaried_event, self.varied_event)
@@ -88,7 +121,8 @@ class OccurrenceBase(models.Model):
     original_start = unvaried_start = property(_get_unvaried_start, _set_unvaried_start)
     
     def _get_unvaried_end(self):
-        return datetime.datetime.combine(self.unvaried_end_date or self.unvaried_start_date, self.unvaried_end_time)
+        return datetime.datetime.combine(self.unvaried_end_date or self.unvaried_start_date,
+                                         self.unvaried_end_time or self.unvaried_start_time)
     def _set_unvaried_end(self, value):
         self.unvaried_end_date = value.date
         self.unvaried_end_time = value.time   

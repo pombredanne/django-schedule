@@ -2,9 +2,11 @@ import datetime
 import os
 from django.core.urlresolvers import reverse
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.db.models import get_model
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor
 from eventtools.tests.eventtools_testapp.models import *
+from eventtools.tests.eventtools_testapp.forms import *
 from datetime import date, datetime, time, timedelta
 from _inject_app import TestCaseWithApp as TestCase
 from eventtools.models import Rule
@@ -146,6 +148,55 @@ class TestModel(TestCase):
         num_variations2 = int(LectureEventVariation.objects.count())
         self.assertEqual(num_variations1, num_variations2)
         
+    def test_occurrence_and_occurrence_generator_validation(self):
+        evt = LectureEvent.objects.create(location='The lecture hall', title='Lecture series on Amphibians')
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_start_date=str(date(2010, 8, 1)),
+                first_start_time=str(time(13, 0)),
+                first_end_date=str(date(2010, 7, 1))))
+        self.assertFalse(form.is_valid(), "end date cannot be later than start date")
+
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_start_date=str(date(2010, 8, 1)),
+                first_start_time=str(time(13, 0))))
+        self.assertFalse(form.is_valid(), "end date cannot be same as start date")
+
+        # same as above, except first_end_date not specified
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_start_date=str(date(2010, 8, 1)),
+                first_start_time=str(time(13, 0)),
+                first_end_time=str(time(13, 0))))
+        self.assertFalse(form.is_valid(), "end date cannot be same as start date #2")
+
+        # first_start_date not specified
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_start_date=str(date(2010, 8, 1)),
+                first_start_time=str(time(13, 0)),
+                first_end_date=str(date(2010, 8, 1))))
+        self.assertFalse(form.is_valid(), "end date cannot be same as start date #3")
+
+        # normal case
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_start_date=str(date(2010, 8, 1)),
+                first_start_time=str(time(13, 0)),
+                first_end_date=str(date(2010, 9, 1))))
+        self.assertTrue(form.is_valid(), "normal case, should have validated")
+        form.save()
+
+        occ = evt.get_one_occurrence()
+        self.assertFalse(occ.is_varied)
+        self.assert_(occ.clean() is None)
+
+        occ.varied_end_date = occ.varied_start_date + timedelta(-1)
+        self.assertTrue(occ.is_varied)
+        self.assertRaises(ValidationError, occ.clean)
+
+    
     def test_occurrence_generator_weirdness(self):
         evt = BroadcastEvent.objects.create(presenter = "Jimmy McBigmouth", studio=2)
         gen = evt.create_generator(first_start_date=date(2010, 1, 1), first_start_time=time(13, 0), first_end_date=None, first_end_time=time(14, 0))
