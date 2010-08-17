@@ -87,16 +87,17 @@ class OccurrenceGeneratorBase(models.Model):
     
     def clean(self):
         """ check that the end datetime must be after start date """
-        first_start_datetime = datetime.datetime.combine(self.first_start_date, self.first_start_time)
-
-        # default to start_date and start_time for nullable first_end_* fields
-        first_end_date = self.first_end_date or self.first_start_date
-        first_end_time = self.first_end_time or self.first_start_time
-        first_end_datetime = datetime.datetime.combine(first_end_date, first_end_time)
-
-        if first_end_datetime < first_start_datetime:
-            raise ValidationError(_("end date (%s) must be greater than or equal to start date (%s).") % (first_end_datetime,
-                                                                                              first_start_datetime))
+        if self.first_start_date and self.first_start_time:
+	        first_start_datetime = datetime.datetime.combine(self.first_start_date, self.first_start_time)
+	
+	        # default to start_date and start_time for nullable first_end_* fields
+	        first_end_date = self.first_end_date or self.first_start_date
+	        first_end_time = self.first_end_time or self.first_start_time
+	        first_end_datetime = datetime.datetime.combine(first_end_date, first_end_time)
+	
+	        if first_end_datetime < first_start_datetime:
+	            raise ValidationError(_("end date (%s) must be greater than or equal to start date (%s).") % (first_end_datetime,
+	                                                                                              first_start_datetime))
 
 
 

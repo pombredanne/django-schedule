@@ -68,30 +68,32 @@ class OccurrenceBase(models.Model):
         Theoretically, we don't need to check the unvaried fields since the OccurrenceGeneratorBase.clean does
         validation but we'd rather be safe than sorry.
         """
-        ### unvaried fields
-        uv_start_datetime = datetime.datetime.combine(self.unvaried_start_date, self.unvaried_start_time)
-
-        # default to start_date and start_time for nullable uv_end_* fields
-        uv_end_date = self.unvaried_end_date or self.unvaried_start_date
-        uv_end_time = self.unvaried_end_time or self.unvaried_start_time
-        uv_end_datetime = datetime.datetime.combine(uv_end_date, uv_end_time)
-
-        if uv_end_datetime < uv_start_datetime:
-            raise ValidationError(_("unvaried end date (%s) must be greater than or equal to start date (%s) "
-                                    "- check your occurrence generator") % (uv_end_datetime,
-                                                                            uv_start_datetime))
-
-        ### varied fields
-        varied_start_datetime = datetime.datetime.combine(self.varied_start_date, self.varied_start_time)
-
-        # default to start_date and start_time for nullable varied_end_* fields
-        varied_end_date = self.varied_end_date or self.varied_start_date
-        varied_end_time = self.varied_end_time or self.varied_start_time
-        varied_end_datetime = datetime.datetime.combine(varied_end_date, varied_end_time)
-
-        if varied_end_datetime < varied_start_datetime:
-            raise ValidationError(_("end date (%s) must be greater than or equal to start date (%s).") % (varied_end_datetime,
-                                                                                              varied_start_datetime))
+        if self.unvaried_start_date and self.unvaried_start_time:
+            ### unvaried fields
+            uv_start_datetime = datetime.datetime.combine(self.unvaried_start_date, self.unvaried_start_time)
+    
+            # default to start_date and start_time for nullable uv_end_* fields
+            uv_end_date = self.unvaried_end_date or self.unvaried_start_date
+            uv_end_time = self.unvaried_end_time or self.unvaried_start_time
+            uv_end_datetime = datetime.datetime.combine(uv_end_date, uv_end_time)
+    
+            if uv_end_datetime < uv_start_datetime:
+                raise ValidationError(_("unvaried end date (%s) must be greater than or equal to start date (%s) "
+                                        "- check your occurrence generator") % (uv_end_datetime,
+                                                                                uv_start_datetime))
+        
+        if self.varied_start_date and self.varied_start_time:
+            ### varied fields
+            varied_start_datetime = datetime.datetime.combine(self.varied_start_date, self.varied_start_time)
+    
+            # default to start_date and start_time for nullable varied_end_* fields
+            varied_end_date = self.varied_end_date or self.varied_start_date
+            varied_end_time = self.varied_end_time or self.varied_start_time
+            varied_end_datetime = datetime.datetime.combine(varied_end_date, varied_end_time)
+    
+            if varied_end_datetime < varied_start_datetime:
+                raise ValidationError(_("end date (%s) must be greater than or equal to start date (%s).") % (varied_end_datetime,
+                                                                                                  varied_start_datetime))
 
 
     def _merged_event(self): #bit slow, but friendly

@@ -171,13 +171,20 @@ class TestModel(TestCase):
                 first_end_time=str(time(13, 0))))
         self.assertTrue(form.is_valid())
 
-        # first_start_date not specified
+        # first_end_date not specified
         form = LectureEventOccurrenceGeneratorForm(dict(
                 event=evt.pk,
                 first_start_date=str(date(2010, 8, 1)),
                 first_start_time=str(time(13, 0)),
                 first_end_date=str(date(2010, 8, 1))))
         self.assertTrue(form.is_valid())
+        
+        # Missing start time and date
+        form = LectureEventOccurrenceGeneratorForm(dict(
+                event=evt.pk,
+                first_end_date=str(date(2010, 9, 1)),
+                first_end_time=str(time(13, 0))))
+        self.assertFalse(form.is_valid())
 
         # normal case
         form = LectureEventOccurrenceGeneratorForm(dict(
