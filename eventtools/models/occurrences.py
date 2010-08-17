@@ -76,8 +76,8 @@ class OccurrenceBase(models.Model):
         uv_end_time = self.unvaried_end_time or self.unvaried_start_time
         uv_end_datetime = datetime.datetime.combine(uv_end_date, uv_end_time)
 
-        if uv_end_datetime <= uv_start_datetime:
-            raise ValidationError(_("unvaried end date (%s) must be greater than start date (%s) "
+        if uv_end_datetime < uv_start_datetime:
+            raise ValidationError(_("unvaried end date (%s) must be greater than or equal to start date (%s) "
                                     "- check your occurrence generator") % (uv_end_datetime,
                                                                             uv_start_datetime))
 
@@ -89,8 +89,8 @@ class OccurrenceBase(models.Model):
         varied_end_time = self.varied_end_time or self.varied_start_time
         varied_end_datetime = datetime.datetime.combine(varied_end_date, varied_end_time)
 
-        if varied_end_datetime <= varied_start_datetime:
-            raise ValidationError(_("end date (%s) must be greater than start date (%s).") % (varied_end_datetime,
+        if varied_end_datetime < varied_start_datetime:
+            raise ValidationError(_("end date (%s) must be greater than or equal to start date (%s).") % (varied_end_datetime,
                                                                                               varied_start_datetime))
 
 

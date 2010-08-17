@@ -161,7 +161,7 @@ class TestModel(TestCase):
                 event=evt.pk,
                 first_start_date=str(date(2010, 8, 1)),
                 first_start_time=str(time(13, 0))))
-        self.assertFalse(form.is_valid(), "end date cannot be same as start date")
+        self.assertTrue(form.is_valid())
 
         # same as above, except first_end_date not specified
         form = LectureEventOccurrenceGeneratorForm(dict(
@@ -169,7 +169,7 @@ class TestModel(TestCase):
                 first_start_date=str(date(2010, 8, 1)),
                 first_start_time=str(time(13, 0)),
                 first_end_time=str(time(13, 0))))
-        self.assertFalse(form.is_valid(), "end date cannot be same as start date #2")
+        self.assertTrue(form.is_valid())
 
         # first_start_date not specified
         form = LectureEventOccurrenceGeneratorForm(dict(
@@ -177,7 +177,7 @@ class TestModel(TestCase):
                 first_start_date=str(date(2010, 8, 1)),
                 first_start_time=str(time(13, 0)),
                 first_end_date=str(date(2010, 8, 1))))
-        self.assertFalse(form.is_valid(), "end date cannot be same as start date #3")
+        self.assertTrue(form.is_valid())
 
         # normal case
         form = LectureEventOccurrenceGeneratorForm(dict(
