@@ -61,8 +61,8 @@ def month_calendar(events_pool=[], month=None, show_header=True, selected_start=
     
     return {'month': month, 'month_calendar': month_calendar, 'today': today, 'links': links, 'show_header': show_header}
 
-register.inclusion_tag('month_calendar.html')(month_calendar)
+register.inclusion_tag('eventtools/month_calendar.html')(month_calendar)
 
 def annotated_day(day, classes=None, events=None):
     return {'day': day, 'classes': classes, 'events': events}
-register.inclusion_tag('annotated_day.html')(annotated_day)
+register.inclusion_tag('eventtools/annotated_day.html')(annotated_day)

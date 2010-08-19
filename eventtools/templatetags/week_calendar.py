@@ -43,4 +43,4 @@ def week_calendar(events_pool=[], selected_start=None):
     
     return {'week_calendar': week_calendar}
 
-register.inclusion_tag('week_calendar.html')(week_calendar)
+register.inclusion_tag('eventtools/week_calendar.html')(week_calendar)
