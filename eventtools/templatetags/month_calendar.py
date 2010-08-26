@@ -2,12 +2,13 @@ import calendar
 from datetime import date, timedelta
 from dateutil.relativedelta import *
 from django import template
+from django.template.context import RequestContext
 
 from eventtools.models.events import EventBase
 
 register = template.Library()
 
-def month_calendar(events_pool=[], month=None, show_header=True, selected_start=None, selected_end=None, week_start=0, ):
+def month_calendar(context, events_pool=[], month=None, show_header=True, selected_start=None, selected_end=None, week_start=0, ):
     """
     Creates a configurable html calendar displaying one month
     
@@ -59,10 +60,10 @@ def month_calendar(events_pool=[], month=None, show_header=True, selected_start=
     month_calendar = [map(annotate, week) for week in month_calendar]
     links = {'prev': month+relativedelta(months=-1), 'next': month+relativedelta(months=+1)}
     
-    return {'month': month, 'month_calendar': month_calendar, 'today': today, 'links': links, 'show_header': show_header}
+    return {'month': month, 'month_calendar': month_calendar, 'today': today, 'links': links, 'show_header': show_header, "request":context['request']}
 
-register.inclusion_tag('eventtools/month_calendar.html')(month_calendar)
+register.inclusion_tag('eventtools/month_calendar.html', takes_context=True)(month_calendar)
 
-def annotated_day(day, classes=None, events=None):
-    return {'day': day, 'classes': classes, 'events': events}
-register.inclusion_tag('eventtools/annotated_day.html')(annotated_day)
+def annotated_day(context, day, classes=None, events=None):
+    return {'day': day, 'classes': classes, 'events': events, "request":context['request']}
+register.inclusion_tag('eventtools/annotated_day.html', takes_context=True)(annotated_day)
