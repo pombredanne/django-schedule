@@ -146,6 +146,12 @@ class Period(object):
             yield self.create_sub_period(cls, period.start)
             period = period.next()
 
+    def get_next_occurrence(self, now = None):
+        now = now or datetime.datetime.now()
+#         if self.start < now < self.end:
+        for occ in self.get_occurrences():
+            if now < occ.start:
+                return occ
 
 class Year(Period):
     def __init__(self, events, date=None, parent_exceptional_occurrences=None):
