@@ -107,6 +107,10 @@ class OccurrenceGeneratorBase(models.Model):
         verbose_name = _('occurrence generator')
         verbose_name_plural = _('occurrence generators')
         
+    def _start(self):
+        return datetime.datetime.combine(self.first_start_date, self.first_start_time)
+    start = property(_start)
+               
     def date_description(self):
         if self._date_description:
             return self._date_description

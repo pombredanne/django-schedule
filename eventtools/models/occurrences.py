@@ -174,11 +174,11 @@ class OccurrenceBase(models.Model):
     end_date = property(_end_date)
     
     def _duration(self):
-        return datetime.datetime.combine(self.end_date, self.end_time) - datetime.datetime.combine(self.start_date, self.start_time)
+        return self.end - self.start
     duration = property(_duration)
 
     def _humanized_duration(self):
-        return timesince(datetime.datetime.combine(self.start_date, self.start_time), datetime.datetime.combine(self.end_date, self.end_time))
+        return timesince(self.start, self.end)
     humanized_duration = property(_humanized_duration)
 
     def cancel(self):

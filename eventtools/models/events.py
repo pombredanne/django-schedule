@@ -169,15 +169,14 @@ class EventBase(models.Model):
         """
         if self.variations_count() > 0 and not self.date_description:
             raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
-        
- 
+
     def get_first_generator(self):
         return self.generators.order_by('first_start_date', 'first_start_time')[0]
-    first_generator = get_first_generator
+    first_generator = property(get_first_generator)
             
     def get_first_occurrence(self):
         try:
-            return self.first_generator().get_first_occurrence()
+            return self.first_generator.get_first_occurrence()
         except IndexError:
             raise IndexError("This Event type has no generators defined")
     get_one_occurrence = get_first_occurrence # for backwards compatibility
@@ -187,6 +186,10 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_occurrences(start, end, hide_hidden)
         return sorted(occs)
+        
+    def get_all_occurrences_if_possible(self):
+        if self.get_last_day():
+            return self.get_occurrences(self.first_generator.start, self.get_last_day())
     
     def get_changed_occurrences(self):
         """
@@ -209,9 +212,10 @@ class EventBase(models.Model):
     def get_last_day(self):
         lastdays = []
         for generator in self.generators.all():
-            if not generator.end_recurring_period:
-                return False
-            lastdays.append(generator.end_recurring_period)
+            if generator.repeat_until:
+                lastdays.append(generator.repeat_until)
+            else:
+                lastdays.append(generator.end)
             for varied in generator.get_changed_occurrences():
                 lastdays.append(varied.varied_end)
         lastdays.sort()
@@ -268,19 +272,19 @@ class EventBase(models.Model):
         return self.variations.create(*args, **kwargs)
         
     def next_occurrences(self, num_days=28):
-        from events.periods import Period
+        from eventtools.periods import Period
         first = False
         last = False
         for gen in self.generators.all():
             if not first or gen.start < first:
                 first = gen.start
-            if gen.rule and not gen.end_day:
+            if gen.rule and not gen.repeat_until:
                 last = False # at least one rule is infinite
                 break
-            if not gen.end_day:
+            if not gen.repeat_until:
                 genend = gen.start
             else:
-                genend = gen.end_recurring_period
+                genend = gen.repeat_until
             if not last or genend > last:
                 last = genend
         if last:
