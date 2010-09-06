@@ -295,6 +295,24 @@ class OccurrenceGeneratorBase(models.Model):
         return changed_occurrences
         
 
+    def is_hidden(self):
+        """ return ``True`` if the generator has no repetition rule and the occurrence is hidden """
+        if self.rule is not None:
+            return False # if there is a repetition rule, this will always return False
+
+        exceptional_occurrences = self.occurrences.all()
+        return exceptional_occurrences[0].hide_from_lists
+
+
+    def is_cancelled(self):
+        """ return ``True`` if the generator has no repetition rule and the occurrence is cancelled """
+        if self.rule is not None:
+            return False # if there _is_ a repetition rule, this will always return False
+
+        exceptional_occurrences = self.occurrences.all()
+        return exceptional_occurrences[0].cancelled
+
+
     def get_rrule_object(self):
         if self.rule is not None:
             if self.rule.complex_rule:

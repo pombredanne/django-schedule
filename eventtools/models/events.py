@@ -131,12 +131,12 @@ class EventBase(models.Model):
     class Meta:
         abstract = True
 
-    def date_description(self):
+    def date_description(self, hide_hidden=True):
         if self._date_description:
             return self._date_description
         gens = self.generators.all()
         if gens:
-            return _("\n ").join([g.date_description() for g in gens])
+            return _("\n ").join([g.date_description() for g in gens if not hide_hidden or not g.is_hidden()])
         else:
             return _("Date TBA")
     date_description = property(date_description)
