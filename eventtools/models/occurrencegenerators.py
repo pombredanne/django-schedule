@@ -230,11 +230,11 @@ class OccurrenceGeneratorBase(models.Model):
     def _set_end_time(self, value):
         self.first_end_time = value
     end_time = property(_get_end_time, _set_end_time)    
-        
+       
     def _end(self):
         return datetime.datetime.combine(self.first_end_date or self.first_start_date, self.first_end_time or self.first_start_time)
     end = property(_end)
-
+	
     def __unicode__(self):
         date_format = u'l, %s' % ugettext("DATE_FORMAT")
         result = ugettext('%(title)s: %(start)s-%(end)s') % {
@@ -246,7 +246,7 @@ class OccurrenceGeneratorBase(models.Model):
             result += " repeating %s until %s" % (self.rule, date_filter(self.repeat_until, date_format))
             
         return result
-
+	
     def get_occurrences(self, start, end, hide_hidden=True):
         """
         returns a list of occurrences between the datetimes ``start`` and ``end``.
@@ -274,8 +274,7 @@ class OccurrenceGeneratorBase(models.Model):
         # then add exceptional occurrences which originated outside of this period but now
         # fall within it
         final_occurrences += occ_replacer.get_additional_occurrences(start, end)
-
-        # import pdb; pdb.set_trace()
+		
         return final_occurrences
     
     def get_changed_occurrences(self):
@@ -290,10 +289,8 @@ class OccurrenceGeneratorBase(models.Model):
             if not occ.hide_from_lists:
                 # ...but only if they are within this period
                 changed_occurrences.append(occ)
-
-        # import pdb; pdb.set_trace()
+		
         return changed_occurrences
-        
 
     def is_hidden(self):
         """ return ``True`` if the generator has no repetition rule and the occurrence is hidden """
@@ -301,7 +298,7 @@ class OccurrenceGeneratorBase(models.Model):
             return False # if there is a repetition rule, this will always return False
 
         exceptional_occurrences = self.occurrences.all()
-        return exceptional_occurrences[0].hide_from_lists
+        return exceptional_occurrences[0].hide_from_lists if exceptional_occurrences else False
 
 
     def is_cancelled(self):
@@ -310,7 +307,7 @@ class OccurrenceGeneratorBase(models.Model):
             return False # if there _is_ a repetition rule, this will always return False
 
         exceptional_occurrences = self.occurrences.all()
-        return exceptional_occurrences[0].cancelled
+        return exceptional_occurrences[0].cancelled if exceptional_occurrences else False
 
 
     def get_rrule_object(self):
