@@ -48,7 +48,7 @@
           			{% for occ in occurrences %}
                       <tr class="{% cycle 'row1' 'row2' %}">
                         {% if occ.id %}
-                          <th><a href="{{ occ_change_url }}/{{ occ.id }}">{{ occ.start|date:"jS" }}</a></th>
+                          <th><a href="{{ occ_change_url }}/{{ occ.id }}">{{ occ.start|date:"b jS" }}</a></th>
                           <td>{{ occ.start|date:"l" }}</td>
                           <td>{{ occ.unvaried_start|date:"P" }}</td>
                           <td><img src="{% admin_media_prefix %}img/admin/icon-yes.gif" alt="Yes" /></td>
