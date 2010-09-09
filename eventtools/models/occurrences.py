@@ -12,7 +12,7 @@ Occurrences represent an occurrence of an event, which have been lazily generate
 
 Occurrences are NOT usually saved to the database, since there is potentially an infinite number of them (for events that repeat with no end date).
 
-However, if a particular occurrence is exceptional in any way (by changing the timing parameters, or by cancelling the occurence, or by linking to an EventVariation), then it should be saved to the database as an exception.
+However, if a particular occurrence is exceptional in any way (by changing the timing parameters, or by cancelling the occurrence, or by linking to an EventVariation), then it should be saved to the database as an exception.
 
 When generating a set of occurrences, the generator checks to see if any exceptions have been saved to the database.
 """

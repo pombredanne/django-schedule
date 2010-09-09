@@ -9,6 +9,7 @@ from django.db import models
 from django.utils.translation import ugettext, ugettext_lazy as _
 from rules import Rule
 from utils import datetimeify
+import string
 
 
 """
@@ -131,7 +132,7 @@ class OccurrenceGeneratorBase(models.Model):
             As above but ending with "...until 5 January"
         """
         
-        result = datetime.datetime.strftime(self.first_start_date, "%A %d %B %Y")
+        result = "%s %s" % (datetime.datetime.strftime(self.first_start_date, "%A"), string.lstrip(datetime.datetime.strftime(self.first_start_date, "%d %B %Y"), '0'))
         if self.first_end_date and (self.first_start_date != self.first_end_date):
             result += " to %s" % datetime.datetime.strftime(self.first_end_date, "%A %d %B %Y")
 
@@ -365,3 +366,15 @@ class OccurrenceGeneratorBase(models.Model):
         while True:
             next = generator.next()
             yield occ_replacer.get_occurrence(next)
+            
+    def save(self):
+        # if the occurrence generator changes, we must not break the link with persisted occurrences
+        if self.id: # must already exist
+            for occ in self.occurrences.all(): # only persisted occurrences of course
+                occ.unvaried_start_date = self.first_start_date
+                occ.unvaried_start_time = self.first_start_time
+                occ.unvaried_end_date = self.first_end_date
+                occ.unvaried_end_time = self.first_end_time
+                occ.save()
+        super(OccurrenceGeneratorBase, self).save()
+

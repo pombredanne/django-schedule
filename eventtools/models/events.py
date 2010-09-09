@@ -124,7 +124,7 @@ class EventBase(models.Model):
     # _generator_model_name
     
     __metaclass__ = EventModelBase
-    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is ommitted, an automatic description will be attempted."))
+    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is omitted, an automatic description will be attempted."))
     
     objects = EventManagerBase()
     
@@ -207,7 +207,7 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_changed_occurrences()
         
-        return set(sorted(occs + variation_occs))
+        return list(set(sorted(occs + variation_occs)))
     
     def get_last_day(self):
         lastdays = []
@@ -215,6 +215,8 @@ class EventBase(models.Model):
             if generator.repeat_until:
                 lastdays.append(generator.repeat_until)
             else:
+                if generator.rule:
+                    return None
                 lastdays.append(generator.end)
             for varied in generator.get_changed_occurrences():
                 lastdays.append(varied.varied_end)
