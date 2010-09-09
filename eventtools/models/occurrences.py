@@ -36,8 +36,8 @@ class OccurrenceBase(models.Model):
     varied_end_time = models.TimeField(_("varied end time"), blank=True, null=True, db_index=True, help_text=_("if omitted, start time is assumed"))
     
     cancelled = models.BooleanField(_("cancelled"), default=False)
-    hide_from_lists = models.BooleanField(_("hide_from_lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
-
+    hide_from_lists = models.BooleanField(_("hide from lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
+    full = models.BooleanField(_("sold out / full"))
 
     class Meta:
         verbose_name = _("occurrence")
