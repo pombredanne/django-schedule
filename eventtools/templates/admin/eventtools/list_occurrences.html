@@ -48,7 +48,7 @@
           			{% for occ in occurrences %}
                       <tr class="{% cycle 'row1' 'row2' %}">
                         {% if occ.id %}
-                          <th><a href="{{ occ_change_url }}/{{ occ.id }}">{{ occ.start|date:"b jS" }}</a></th>
+                          <th><a href="{{ occ_change_url }}/{{ occ.id }}">{{ occ.start|date:"F jS" }}</a></th>
                           <td>{{ occ.start|date:"l" }}</td>
                           <td>{{ occ.unvaried_start|date:"P" }}</td>
                           <td><img src="{% admin_media_prefix %}img/admin/icon-yes.gif" alt="Yes" /></td>
@@ -57,7 +57,7 @@
                           <td>{{ occ.unvaried_range_string }}</td>
                           <td>{{ occ.varied_event }}</td>
                         {% else %}
-                          <th><a href="../create_exception/{{ occ.generator.id }}/{{ occ.start.year }}-{{ occ.start.month }}-{{ occ.start.day }}/{{ occ.start.hour }}-{{ occ.start.minute }}-{{ occ.start.second }}/">{{ occ.start|date:"jS" }}</a></th>
+                          <th><a href="../create_exception/{{ occ.generator.id }}/{{ occ.start.year }}-{{ occ.start.month }}-{{ occ.start.day }}/{{ occ.start.hour }}-{{ occ.start.minute }}-{{ occ.start.second }}/">{{ occ.start|date:"F jS" }}</a></th>
                         <td>{{ occ.start|date:"l" }}</td>
                         <td>{{ occ.start|date:"P" }}</td>
                         <td><img src="{% admin_media_prefix %}img/admin/icon-no.gif" alt="No" /></td>
