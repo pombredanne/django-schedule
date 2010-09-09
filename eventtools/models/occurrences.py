@@ -232,6 +232,9 @@ class OccurrenceBase(models.Model):
         ical.add('vevent').add('summary').value = self.merged_event.title
         ical.vevent.add('dtstart').value = datetime.datetime.combine(self.start_date, self.start_time) 
         ical.vevent.add('dtend').value = datetime.datetime.combine(self.end_date, self.end_time)
+        if self.cancelled:
+            ical.vevent.add('method').value = 'CANCEL'
+            ical.vevent.add('status').value = 'CANCELLED'
         return ical 
 
     @property
