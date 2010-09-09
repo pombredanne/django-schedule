@@ -191,6 +191,13 @@ class EventBase(models.Model):
         if self.get_last_day():
             return self.get_occurrences(self.first_generator.start, self.get_last_day())
     
+    def occurrences_count(self):
+        if self.get_last_day():
+            return len(self.get_occurrences(self.first_generator.start, self.get_last_day()))
+        else:
+            return '&infin;'
+    occurrences_count.allow_tags = True
+    
     def get_changed_occurrences(self):
         """
         return all the variation occurrences as well as
