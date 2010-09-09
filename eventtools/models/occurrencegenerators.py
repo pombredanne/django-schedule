@@ -55,10 +55,10 @@ class OccurrenceGeneratorManager(models.Manager):
         # relevant generators have
         # the first_start_date before the requested end date AND
         # the end date is NULL or after the requested start date
-        potental_occurrence_generators = self.filter(first_start_date__lte=end) & (self.filter(repeat_until__isnull=True) | self.filter(repeat_until__gte=start))
+        potential_occurrence_generators = self.filter(first_start_date__lte=end) & (self.filter(repeat_until__isnull=True) | self.filter(repeat_until__gte=start))
         
         occurrences = []
-        for generator in potental_occurrence_generators:
+        for generator in potential_occurrence_generators:
             occurrences += generator.get_occurrences(start, end)
         
         #In case you are pondering returning a queryset, remember that potentially occurrences are not in the database, so no such QS exists.
