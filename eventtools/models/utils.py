@@ -37,3 +37,12 @@ class MergedObject():
         else:
             raise AttributeError("Set the attribute on one of the objects that are being merged.")
     
+def occurrences_to_events(occurrences):
+    event_ids = []
+    events = []
+    for occurrence in occurrences:
+        # import pdb; pdb.set_trace()
+        if occurrence.unvaried_event.id not in event_ids: #just testing the id saves database lookups (er, maybe)
+            event_ids.append(occurrence.unvaried_event.id)
+            events.append(occurrence.unvaried_event)
+    return events
