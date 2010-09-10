@@ -60,7 +60,7 @@ class EventVariationBase(models.Model):
     reason = models.CharField(_("Identifier"), max_length = 255, help_text=_("this is useful for identifying this variation in lists"))
 
     def __unicode__(self):
-        return "%s (%s)" % (self.unvaried_event, self.reason)
+        return u"%s (%s)" % (self.unvaried_event, self.reason)
         
     class Meta:
         abstract = True
