@@ -57,10 +57,11 @@ class EventVariationBase(models.Model):
     #injected by EventVariationModelBase:
     # unvaried_event = models.ForeignKey(somekindofEvent)
     
-    reason = models.CharField(_("Short reason for variation"), max_length = 255, help_text=_("this is useful for identifying this variation in lists"))
+    reason = models.CharField(_("Identifier"), max_length = 255, help_text=_("this is useful for identifying this variation in lists"))
 
     def __unicode__(self):
-        return "%s (%s)" % (self.unvaried_event, self.reason)
+        return u"%s (%s)" % (self.unvaried_event, self.reason)
         
     class Meta:
         abstract = True
+        ordering = ['unvaried_event__title', 'reason']

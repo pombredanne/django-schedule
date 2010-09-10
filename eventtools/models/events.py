@@ -168,19 +168,19 @@ class EventBase(models.Model):
     # _generator_model_name
     
     __metaclass__ = EventModelBase
-    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is ommitted, an automatic description will be attempted."))
+    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is omitted, an automatic description will be attempted."))
     
     objects = EventManagerBase()
     
     class Meta:
         abstract = True
 
-    def date_description(self):
+    def date_description(self, hide_hidden=True):
         if self._date_description:
             return self._date_description
         gens = self.generators.all()
         if gens:
-            return _("\n ").join([g.date_description() for g in gens])
+            return _("\n ").join([g.date_description() for g in gens if not hide_hidden or not g.is_hidden()])
         else:
             return _("Date TBA")
     date_description = property(date_description)
@@ -235,6 +235,13 @@ class EventBase(models.Model):
         if self.get_last_day():
             return self.get_occurrences(self.first_generator.start, self.get_last_day())
     
+    def occurrences_count(self):
+        if self.get_last_day():
+            return len(self.get_occurrences(self.first_generator.start, self.get_last_day()))
+        else:
+            return '&infin;'
+    occurrences_count.allow_tags = True
+    
     def get_changed_occurrences(self):
         """
         return all the variation occurrences as well as
@@ -251,7 +258,7 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_changed_occurrences()
         
-        return set(sorted(occs + variation_occs))
+        return list(set(sorted(occs + variation_occs)))
     
     def get_last_day(self):
         lastdays = []
@@ -259,6 +266,8 @@ class EventBase(models.Model):
             if generator.repeat_until:
                 lastdays.append(generator.repeat_until)
             else:
+                if generator.rule:
+                    return None
                 lastdays.append(generator.end)
             for varied in generator.get_changed_occurrences():
                 lastdays.append(varied.varied_end)
