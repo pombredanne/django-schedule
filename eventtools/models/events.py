@@ -6,6 +6,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 import sys
 from occurrencegenerators import *
 from occurrences import *
+from utils import occurrences_to_events
 
 from django.core.exceptions import ValidationError
 
@@ -33,7 +34,11 @@ This will return a list of EventOccurrences. Remember to use EventOccurrence.mer
 """
 
 class EventQuerySetBase(models.query.QuerySet):
-    def occurrences_between(self, start, end):        
+    def occurrences_between(self, start, end=None):        
+        """
+        returns the EventOccurrences in a given datetime range.
+        In most calendar applications you want to use occurrences_between_days.
+        """
         occurrences = []
         for item in self:
             occurrences += item.generators.occurrences_between(start, end)
@@ -41,17 +46,43 @@ class EventQuerySetBase(models.query.QuerySet):
         return sorted(occurrences)
 
     def between(self, start, end):
-        event_ids = []
-        events = []
+        """
+        returns the Events (not occurrences) that occur in a given datetime range
+        In most calendar applications you want to use between_days.
+        """
         occurrences = self.occurrences_between(start, end)
+        return occurrences_to_events(occurrences)
         
-        for occurrence in occurrences:
-            # import pdb; pdb.set_trace()
-            if occurrence.unvaried_event.id not in event_ids: #just testing the id saves database lookups (er, maybe)
-                event_ids.append(occurrence.unvaried_event.id)
-                events.append(occurrence.unvaried_event)
-    
-        return events
+    def occurrences_between_days(self, startday, endday):
+        """
+        returns the EventOccurrences in a given date range.
+        If datetimes are supplied, they are clamped to the beginning and end of their respective days.
+        """
+        if isinstance(startday, datetime.datetime):
+            startday = startday.date()
+        if isinstance(endday, datetime.datetime):
+            endday = endday.date()
+        return self.occurrences_between(
+            datetime.datetime.combine(startday, datetime.time.min),
+            datetime.datetime.combine(endday, datetime.time.max)
+        ) 
+
+    def between_days(self, startday, endday):
+        """
+        returns the Events (not occurrences) that occur in a given date range.
+        If datetimes are supplied, they are clamped to the beginning and end of their respective days.
+        """
+        occurrences = self.occurrences_between_days(startday, endday)
+        return occurrences_to_events(occurrences)
+
+    def occurrences_on_day(self, day):
+        "Shortcut method"
+        return self.occurrences_between_days(day, day) 
+
+    def on_day(self, day):
+        occurrences = self.occurrences_on_day(day)
+        return occurrences_to_events(occurrences)
+
 
 class EventManagerBase(models.Manager):
     def get_query_set(self): 
@@ -62,6 +93,19 @@ class EventManagerBase(models.Manager):
         
     def between(self, start, end):
          return self.get_query_set().between(start, end)
+         
+    def occurrences_between_days(self, startday, endday):
+         return self.get_query_set().occurrences_between_days(startday, endday)
+
+    def between_days(self, startday, endday):
+         return self.get_query_set().between_days(startday, endday)
+
+    def occurrences_on_day(self, day):
+        return self.get_query_set().on_day(day)
+
+    def on_day(self, day):
+        return self.get_query_set().on_day(day)
+
 
 class EventModelBase(ModelBase):
     def __init__(cls, name, bases, attrs):
