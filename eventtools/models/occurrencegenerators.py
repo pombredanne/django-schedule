@@ -385,11 +385,31 @@ class OccurrenceGeneratorBase(models.Model):
     def save(self):
         # if the occurrence generator changes, we must not break the link with persisted occurrences
         if self.id: # must already exist
-            for occ in self.occurrences.all(): # only persisted occurrences of course
-                occ.unvaried_start_date = self.first_start_date
-                occ.unvaried_start_time = self.first_start_time
-                occ.unvaried_end_date = self.first_end_date
-                occ.unvaried_end_time = self.first_end_time
-                occ.save()
+            saved_self = self.__class__.objects.get(pk=self.id)
+            if self.first_start_date != saved_self.first_start_date or \
+                self.first_start_time != saved_self.first_start_time or \
+                self.first_end_date != saved_self.first_end_date or \
+                self.first_end_time != saved_self.first_end_time: # have any of the times changed in the generator?
+                # something has changed, so let's figure out the timeshifts for the generator
+                start_shift = self.start - saved_self.start
+                end_shift = self.end - saved_self.end
+                for occ in self.occurrences.all(): # only persisted occurrences of course
+                    if occ.start == occ.original_start and occ.end == occ.original_end: # is this occurrence tracking the generator's times?
+                        # It is still using the generator's times, so we better shift it
+                        varied_start = datetime.datetime.combine(occ.varied_start_date, occ.varied_start_time) + start_shift
+                        varied_end = datetime.datetime.combine(occ.varied_end_date, occ.varied_end_time) + end_shift
+                        occ.varied_start_date = varied_start.date()
+                        occ.varied_start_time = varied_start.time()
+                        occ.varied_end_date = varied_end.date()
+                        occ.varied_end_time = varied_end.time()
+                    # and then apply the new 'unvaried' times
+                    unvaried_start = datetime.datetime.combine(occ.unvaried_start_date, occ.unvaried_start_time) + start_shift
+                    unvaried_end = datetime.datetime.combine(occ.unvaried_end_date, occ.unvaried_end_time) + end_shift
+                    occ.unvaried_start_date = unvaried_start.date()
+                    occ.unvaried_start_time = unvaried_start.time()
+                    occ.unvaried_end_date = unvaried_end.date()
+                    occ.unvaried_end_time = unvaried_end.time()
+
+                    occ.save()
         super(OccurrenceGeneratorBase, self).save()
 
