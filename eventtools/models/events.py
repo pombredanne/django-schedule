@@ -172,11 +172,10 @@ class EventBase(models.Model):
         
  
     def get_first_generator(self):
-        g = self.generators.order_by('first_start_date', 'first_start_time')
-        
-        if g.count() >= 1:
-            return g[0]
-        return None
+        try:
+            return self.generators.order_by('first_start_date', 'first_start_time')[0]
+        except IndexError:
+            return None
     first_generator = property(get_first_generator)
             
     def get_first_occurrence(self):
