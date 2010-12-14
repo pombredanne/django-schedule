@@ -215,7 +215,10 @@ class EventBase(models.Model):
             raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
 
     def get_first_generator(self):
-        return self.generators.order_by('first_start_date', 'first_start_time')[0]
+        try:
+            return self.generators.order_by('first_start_date', 'first_start_time')[0]
+        except IndexError:
+            return None
     first_generator = property(get_first_generator)
             
     def get_first_occurrence(self):
