@@ -12,7 +12,7 @@ Occurrences represent an occurrence of an event, which have been lazily generate
 
 Occurrences are NOT usually saved to the database, since there is potentially an infinite number of them (for events that repeat with no end date).
 
-However, if a particular occurrence is exceptional in any way (by changing the timing parameters, or by cancelling the occurence, or by linking to an EventVariation), then it should be saved to the database as an exception.
+However, if a particular occurrence is exceptional in any way (by changing the timing parameters, or by cancelling the occurrence, or by linking to an EventVariation), then it should be saved to the database as an exception.
 
 When generating a set of occurrences, the generator checks to see if any exceptions have been saved to the database.
 """
@@ -36,8 +36,8 @@ class OccurrenceBase(models.Model):
     varied_end_time = models.TimeField(_("varied end time"), blank=True, null=True, db_index=True, help_text=_("if omitted, start time is assumed"))
     
     cancelled = models.BooleanField(_("cancelled"), default=False)
-    hide_from_lists = models.BooleanField(_("hide_from_lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
-
+    hide_from_lists = models.BooleanField(_("hide from lists"), default=False, help_text="Hide this occurrence instead of explicitly cancelling it.")
+    full = models.BooleanField(_("sold out / full"))
 
     class Meta:
         verbose_name = _("occurrence")
@@ -174,11 +174,11 @@ class OccurrenceBase(models.Model):
     end_date = property(_end_date)
     
     def _duration(self):
-        return datetime.datetime.combine(self.end_date, self.end_time) - datetime.datetime.combine(self.start_date, self.start_time)
+        return self.end - self.start
     duration = property(_duration)
 
     def _humanized_duration(self):
-        return timesince(datetime.datetime.combine(self.start_date, self.start_time), datetime.datetime.combine(self.end_date, self.end_time))
+        return timesince(self.start, self.end)
     humanized_duration = property(_humanized_duration)
 
     def cancel(self):
@@ -232,6 +232,9 @@ class OccurrenceBase(models.Model):
         ical.add('vevent').add('summary').value = self.merged_event.title
         ical.vevent.add('dtstart').value = datetime.datetime.combine(self.start_date, self.start_time) 
         ical.vevent.add('dtend').value = datetime.datetime.combine(self.end_date, self.end_time)
+        if self.cancelled:
+            ical.vevent.add('method').value = 'CANCEL'
+            ical.vevent.add('status').value = 'CANCELLED'
         return ical 
 
     @property

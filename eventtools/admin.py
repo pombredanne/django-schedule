@@ -59,7 +59,7 @@ class EventAdminBase(admin.ModelAdmin):
               url(r'^(?P<event_id>\d+)/create_exception/(?P<gen_id>\d+)/(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})/(?P<hour>\d{1,2})-(?P<minute>\d{1,2})-(?P<second>\d{1,2})/$', self.admin_site.admin_view(make_exceptional_occurrence), {'modeladmin': self}),
         )
         return my_urls + super_urls
-    list_display = ('title', 'edit_occurrences_link', 'variations_count')
+    list_display = ('title', 'edit_occurrences_link', 'occurrences_count', 'variations_count')
 
 class OccurrenceAdminBase(admin.ModelAdmin):
 

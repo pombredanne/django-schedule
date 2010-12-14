@@ -6,6 +6,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 import sys
 from occurrencegenerators import *
 from occurrences import *
+from utils import occurrences_to_events
 
 from django.core.exceptions import ValidationError
 
@@ -33,7 +34,11 @@ This will return a list of EventOccurrences. Remember to use EventOccurrence.mer
 """
 
 class EventQuerySetBase(models.query.QuerySet):
-    def occurrences_between(self, start, end):        
+    def occurrences_between(self, start, end=None):        
+        """
+        returns the EventOccurrences in a given datetime range.
+        In most calendar applications you want to use occurrences_between_days.
+        """
         occurrences = []
         for item in self:
             occurrences += item.generators.occurrences_between(start, end)
@@ -41,17 +46,43 @@ class EventQuerySetBase(models.query.QuerySet):
         return sorted(occurrences)
 
     def between(self, start, end):
-        event_ids = []
-        events = []
+        """
+        returns the Events (not occurrences) that occur in a given datetime range
+        In most calendar applications you want to use between_days.
+        """
         occurrences = self.occurrences_between(start, end)
+        return occurrences_to_events(occurrences)
         
-        for occurrence in occurrences:
-            # import pdb; pdb.set_trace()
-            if occurrence.unvaried_event.id not in event_ids: #just testing the id saves database lookups (er, maybe)
-                event_ids.append(occurrence.unvaried_event.id)
-                events.append(occurrence.unvaried_event)
-    
-        return events
+    def occurrences_between_days(self, startday, endday):
+        """
+        returns the EventOccurrences in a given date range.
+        If datetimes are supplied, they are clamped to the beginning and end of their respective days.
+        """
+        if isinstance(startday, datetime.datetime):
+            startday = startday.date()
+        if isinstance(endday, datetime.datetime):
+            endday = endday.date()
+        return self.occurrences_between(
+            datetime.datetime.combine(startday, datetime.time.min),
+            datetime.datetime.combine(endday, datetime.time.max)
+        ) 
+
+    def between_days(self, startday, endday):
+        """
+        returns the Events (not occurrences) that occur in a given date range.
+        If datetimes are supplied, they are clamped to the beginning and end of their respective days.
+        """
+        occurrences = self.occurrences_between_days(startday, endday)
+        return occurrences_to_events(occurrences)
+
+    def occurrences_on_day(self, day):
+        "Shortcut method"
+        return self.occurrences_between_days(day, day) 
+
+    def on_day(self, day):
+        occurrences = self.occurrences_on_day(day)
+        return occurrences_to_events(occurrences)
+
 
 class EventManagerBase(models.Manager):
     def get_query_set(self): 
@@ -62,6 +93,19 @@ class EventManagerBase(models.Manager):
         
     def between(self, start, end):
          return self.get_query_set().between(start, end)
+         
+    def occurrences_between_days(self, startday, endday):
+         return self.get_query_set().occurrences_between_days(startday, endday)
+
+    def between_days(self, startday, endday):
+         return self.get_query_set().between_days(startday, endday)
+
+    def occurrences_on_day(self, day):
+        return self.get_query_set().on_day(day)
+
+    def on_day(self, day):
+        return self.get_query_set().on_day(day)
+
 
 class EventModelBase(ModelBase):
     def __init__(cls, name, bases, attrs):
@@ -124,19 +168,19 @@ class EventBase(models.Model):
     # _generator_model_name
     
     __metaclass__ = EventModelBase
-    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is ommitted, an automatic description will be attempted."))
+    _date_description = models.TextField(_("Describe when this event occurs"), blank=True, help_text=_("e.g. \"Every Tuesday and Thursday in March 2010\". If this is omitted, an automatic description will be attempted."))
     
     objects = EventManagerBase()
     
     class Meta:
         abstract = True
 
-    def date_description(self):
+    def date_description(self, hide_hidden=True):
         if self._date_description:
             return self._date_description
         gens = self.generators.all()
         if gens:
-            return _("\n ").join([g.date_description() for g in gens])
+            return _("\n ").join([g.date_description() for g in gens if not hide_hidden or not g.is_hidden()])
         else:
             return _("Date TBA")
     date_description = property(date_description)
@@ -169,8 +213,7 @@ class EventBase(models.Model):
         """
         if self.variations_count() > 0 and not self.date_description:
             raise ValidationError("Sorry, we can't figure out how to describe an event with variations. Please add your own date description under Visitor Info.")
-        
- 
+
     def get_first_generator(self):
         try:
             return self.generators.order_by('first_start_date', 'first_start_time')[0]
@@ -180,7 +223,7 @@ class EventBase(models.Model):
             
     def get_first_occurrence(self):
         try:
-            return self.first_generator().get_first_occurrence()
+            return self.first_generator.get_first_occurrence()
         except IndexError:
             raise IndexError("This Event type has no generators defined")
     get_one_occurrence = get_first_occurrence # for backwards compatibility
@@ -190,6 +233,17 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_occurrences(start, end, hide_hidden)
         return sorted(occs)
+        
+    def get_all_occurrences_if_possible(self):
+        if self.get_last_day():
+            return self.get_occurrences(self.first_generator.start, self.get_last_day())
+    
+    def occurrences_count(self):
+        if self.get_last_day():
+            return len(self.get_occurrences(self.first_generator.start, self.get_last_day()))
+        else:
+            return '&infin;'
+    occurrences_count.allow_tags = True
     
     def get_changed_occurrences(self):
         """
@@ -207,14 +261,17 @@ class EventBase(models.Model):
         for gen in self.generators.all():
             occs += gen.get_changed_occurrences()
         
-        return set(sorted(occs + variation_occs))
+        return list(set(sorted(occs + variation_occs)))
     
     def get_last_day(self):
         lastdays = []
         for generator in self.generators.all():
-            if not generator.end_recurring_period:
-                return False
-            lastdays.append(generator.end_recurring_period)
+            if generator.repeat_until:
+                lastdays.append(generator.repeat_until)
+            else:
+                if generator.rule:
+                    return None
+                lastdays.append(generator.end)
             for varied in generator.get_changed_occurrences():
                 lastdays.append(varied.varied_end)
         lastdays.sort()
@@ -271,19 +328,19 @@ class EventBase(models.Model):
         return self.variations.create(*args, **kwargs)
         
     def next_occurrences(self, num_days=28):
-        from events.periods import Period
+        from eventtools.periods import Period
         first = False
         last = False
         for gen in self.generators.all():
             if not first or gen.start < first:
                 first = gen.start
-            if gen.rule and not gen.end_day:
+            if gen.rule and not gen.repeat_until:
                 last = False # at least one rule is infinite
                 break
-            if not gen.end_day:
+            if not gen.repeat_until:
                 genend = gen.start
             else:
-                genend = gen.end_recurring_period
+                genend = gen.repeat_until
             if not last or genend > last:
                 last = genend
         if last:
