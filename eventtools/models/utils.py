@@ -11,7 +11,7 @@ def datetimeify(d, clamp="start"):
 def dateify(d):
     if isinstance(d, date):
         return d
-    return d.date
+    return d.date()
 
 
 class MergedObject():
