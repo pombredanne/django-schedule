@@ -6,7 +6,7 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 import sys
 from occurrencegenerators import *
 from occurrences import *
-from utils import occurrences_to_events
+from utils import occurrences_to_events, dateify
 
 from django.core.exceptions import ValidationError
 
@@ -276,7 +276,7 @@ class EventBase(models.Model):
                 lastdays.append(varied.varied_end)
         lastdays.sort()
         try:
-            return lastdays[-1]
+            return dateify(lastdays[-1])
         except IndexError:
             return None
 
