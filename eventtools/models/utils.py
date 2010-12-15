@@ -9,9 +9,9 @@ def datetimeify(d, clamp="start"):
     return datetime.combine(d, time.min)
 
 def dateify(d):
-    if isinstance(d, date):
-        return d
-    return d.date()
+    if isinstance(d, datetime):
+        return d.date()
+    return d
 
 
 class MergedObject():
