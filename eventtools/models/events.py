@@ -235,12 +235,13 @@ class EventBase(models.Model):
         return sorted(occs)
         
     def get_all_occurrences_if_possible(self):
-        if self.get_last_day():
-            return self.get_occurrences(self.first_generator.start, self.get_last_day())
+        if self.get_last_occurrence() != datetime.datetime.max:
+            return self.get_occurrences(self.first_generator.start, self.get_last_occurrence())
+        return None
     
     def occurrences_count(self):
-        if self.get_last_day():
-            return len(self.get_occurrences(self.first_generator.start, self.get_last_day()))
+        if self.get_last_occurrence() != datetime.datetime.max:
+            return len(self.get_occurrences(self.first_generator.start, self.get_last_occurrence()))
         else:
             return '&infin;'
     occurrences_count.allow_tags = True
@@ -263,22 +264,30 @@ class EventBase(models.Model):
         
         return list(set(sorted(occs + variation_occs)))
     
-    def get_last_day(self):
-        lastdays = []
+    def get_last_occurrence(self):
+        lastoccs = []
         for generator in self.generators.all():
             if generator.repeat_until:
-                lastdays.append(generator.repeat_until)
+                lastoccs.append(generator.repeat_until)
             else:
                 if generator.rule:
+<<<<<<< HEAD
                     return None
                 lastdays.append(generator.end)
+=======
+                    return datetime.datetime.max
+                lastoccs.append(generator.end)
+>>>>>>> e75d278... added get_last_occurrence method, and deployed it where appropriate - I was sick of comparing dates with datetimes
             for varied in generator.get_changed_occurrences():
-                lastdays.append(varied.varied_end)
-        lastdays.sort()
+                lastoccs.append(varied.varied_end)
+        lastoccs.sort()
         try:
-            return dateify(lastdays[-1])
+            return lastoccs[-1]
         except IndexError:
             return None
+
+    def get_last_day(self):
+        return dateify(self.get_last_occurrence())
 
     def edit_occurrences_link(self):
         """ An admin link """
