@@ -271,13 +271,8 @@ class EventBase(models.Model):
                 lastoccs.append(generator.repeat_until)
             else:
                 if generator.rule:
-<<<<<<< HEAD
-                    return None
-                lastdays.append(generator.end)
-=======
                     return datetime.datetime.max
                 lastoccs.append(generator.end)
->>>>>>> e75d278... added get_last_occurrence method, and deployed it where appropriate - I was sick of comparing dates with datetimes
             for varied in generator.get_changed_occurrences():
                 lastoccs.append(varied.varied_end)
         lastoccs.sort()
