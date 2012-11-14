@@ -3,21 +3,13 @@
 from setuptools import setup, find_packages
  
 setup(
-    name='django-schedule',
-    version='0.5b',
-    description='A calendaring app for Django.',
-    author='Anthony Robert Hauber',
-    author_email='thauber@gmail.com',
-    url='http://github.com/thauber/django-schedule/tree/master',
-    packages=[
-        'schedule',
-        'schedule.feeds',
-        'schedule.management',
-        'schedule.management.commands',
-        'schedule.models',
-        'schedule.templatetags',
-        'schedule.tests',
-    ],
+    name='glamkit-eventtools',
+    version='0.5.5',
+    description='An event management app for Django.',
+    author='Thomas Ashelford',
+    author_email='thomas@interaction.net.au',
+    url='http://github.com/glamkit/glamkit-eventtools',
+    packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     classifiers=['Development Status :: 4 - Beta',
@@ -30,5 +22,5 @@ setup(
                  'Topic :: Utilities'],
     install_requires=['setuptools', 'vobject', 'python-dateutil'],
     license='BSD',
-    test_suite = "schedule.tests",
+    test_suite = "eventtools.tests",
 )

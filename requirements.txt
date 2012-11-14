@@ -1,0 +1,2 @@
+django-countries==1.0.3
+vobject==0.8.1c
